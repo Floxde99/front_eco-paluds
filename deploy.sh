@@ -9,11 +9,11 @@ rm -rf node_modules package-lock.json dist
 
 # Installation des dépendances
 echo "📦 Installation des dépendances..."
-npm ci
+npm install
 
 # Build pour la production
 echo "🔨 Build pour la production..."
-npm run build:prod
+npm run build
 
 # Vérification du build
 echo "✅ Vérification du build..."
