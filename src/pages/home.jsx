@@ -8,6 +8,11 @@ import { useNavigate } from 'react-router-dom'
 export default function Home() {
 	const navigate = useNavigate()
 
+	// Exemple d'utilisation des variables d'environnement
+	const appName = import.meta.env.VITE_APP_NAME || 'EcoPaluds'
+	const apiUrl = import.meta.env.VITE_API_BASE_URL || 'localhost'
+	const appVersion = import.meta.env.VITE_APP_VERSION || '1.0.0'
+
 	const handleLogout = async () => {
 		try {
 			await logoutUser()
@@ -41,11 +46,12 @@ export default function Home() {
 			<div className="w-full max-w-2xl px-4">
 				<Card>
 					<CardHeader>
-						<CardTitle>Bienvenue</CardTitle>
-						<CardDescription>Tableau de bord</CardDescription>
+						<CardTitle>{appName} - Bienvenue</CardTitle>
+						<CardDescription>Tableau de bord (v{appVersion})</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<p className="mb-4">Vous êtes connecté. Utilisez le bouton ci-dessous pour vous déconnecter.</p>
+						<p className="text-sm text-gray-500 mb-4">API: {apiUrl}</p>
 						<div className="flex gap-2">
 							<Button variant="default" onClick={() => navigate('/profile')}>Mon profil</Button>
 							<Button variant="destructive" onClick={handleLogout}>Se déconnecter</Button>
