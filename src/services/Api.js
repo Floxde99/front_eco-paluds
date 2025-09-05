@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Utilisation des variables d'environnement Vite
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://localhost:3069";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.eco-paluds.fr";
 const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT || 10000;
 
 const api = axios.create({
