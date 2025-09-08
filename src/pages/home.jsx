@@ -1,33 +1,39 @@
 import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { logoutUser } from '@/services/Api'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/hooks/useAuthHook'
+import { ProfileHeader } from '@/components/ProfileHeader'
+import { ProfileCard, SuggestionsCard, NetworkCard, ActivityCard } from '@/components/DashboardCards'
 
 export default function Home() {
 	const navigate = useNavigate()
+	const { user, logout, loading } = useAuth()
 
-	// Exemple d'utilisation des variables d'environnement
-	const appName = import.meta.env.VITE_APP_NAME || 'EcoPaluds'
-	const apiUrl = import.meta.env.VITE_API_BASE_URL || 'localhost'
-	const appVersion = import.meta.env.VITE_APP_VERSION || '1.0.0'
+	// Si on est en cours de chargement, afficher un loader
+	if (loading) {
+		return (
+			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+				<div className="text-center">
+					<div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+					<p className="text-gray-600">Chargement...</p>
+				</div>
+			</div>
+		)
+	}
 
 	const handleLogout = async () => {
 		try {
 			await logoutUser()
-			// Clear local token
-			localStorage.removeItem('authToken')
+			logout()
 			toast.success('Déconnexion réussie')
-			// Navigate to login page
 			navigate('/login')
 		} catch (err) {
 			console.error('Logout error', err)
+			logout()
 			
-			// Always allow user to logout locally even if server fails
-			localStorage.removeItem('authToken')
-			
-			// Show appropriate message based on error
 			if (err?.response?.status >= 500) {
 				toast.info('Déconnecté localement (erreur serveur)')
 			} else if (err?.response?.status === 401 || err?.response?.status === 403) {
@@ -36,29 +42,121 @@ export default function Home() {
 				toast.info('Déconnecté localement')
 			}
 			
-			// Always redirect to login
 			navigate('/login')
 		}
 	}
 
+	const getGreeting = () => {
+		const hour = new Date().getHours()
+		if (hour < 12) return 'Bonjour'
+		if (hour < 18) return 'Bon après-midi'
+		return 'Bonsoir'
+	}
+
+	const getFirstName = () => {
+		// Utiliser le bon champ depuis le backend (firstName avec F majuscule)
+		return user?.firstName || 'Utilisateur'
+	}
+
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-slate-50">
-			<div className="w-full max-w-2xl px-4">
-				<Card>
-					<CardHeader>
-						<CardTitle>{appName} - Bienvenue</CardTitle>
-						<CardDescription>Tableau de bord (v{appVersion})</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<p className="mb-4">Vous êtes connecté. Utilisez le bouton ci-dessous pour vous déconnecter.</p>
-						<p className="text-sm text-gray-500 mb-4">API: {apiUrl}</p>
-						<div className="flex gap-2">
-							<Button variant="default" onClick={() => navigate('/profile')}>Mon profil</Button>
-							<Button variant="destructive" onClick={handleLogout}>Se déconnecter</Button>
+		<div className="min-h-screen bg-gray-50">
+			{/* Header */}
+			<header className="bg-white border-b border-gray-200 px-6 py-4">
+				<div className="flex items-center justify-between">
+					<div className="flex items-center space-x-3">
+						<div className="w-10 h-10 bg-gray-600 rounded-lg"></div>
+						<h1 className="text-xl font-semibold text-gray-900">EcoConnect Paluds</h1>
+					</div>
+					<div className="flex items-center space-x-4">
+						<div className="w-6 h-6 text-gray-400">
+							🔔
 						</div>
-					</CardContent>
-				</Card>
-			</div>
+						<ProfileHeader />
+					</div>
+				</div>
+			</header>
+
+			{/* Main Content */}
+			<main className="px-6 py-8">
+				{/* Welcome Section */}
+				<div className="mb-8">
+					<h2 className="text-3xl font-bold text-gray-900 mb-2">
+						{getGreeting()} {getFirstName()} !
+					</h2>
+					<p className="text-gray-600">Voici un aperçu de votre activité sur EcoConnect</p>
+				</div>
+
+				{/* Dashboard Grid */}
+				<div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+					<ProfileCard />
+					<SuggestionsCard />
+					<NetworkCard />
+					<ActivityCard />
+				</div>
+
+				{/* Quick Access Section */}
+				<div>
+					<h3 className="text-xl font-semibold text-gray-900 mb-4">Accès rapide</h3>
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+						{/* Ma fiche entreprise */}
+						<Card className="cursor-pointer hover:shadow-md transition-shadow">
+							<CardContent className="p-6">
+								<div className="flex items-start space-x-4">
+									<div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+										<div className="w-6 h-6 text-blue-600">🏢</div>
+									</div>
+									<div className="flex-1">
+										<h4 className="font-semibold text-gray-900 mb-1">Ma fiche entreprise</h4>
+										<p className="text-sm text-gray-600">Gérer productions, besoins et déchets</p>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+
+						{/* Rechercher des partenaires */}
+						<Card className="cursor-pointer hover:shadow-md transition-shadow">
+							<CardContent className="p-6">
+								<div className="flex items-start space-x-4">
+									<div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+										<div className="w-6 h-6 text-green-600">🔍</div>
+									</div>
+									<div className="flex-1">
+										<h4 className="font-semibold text-gray-900 mb-1">Rechercher des partenaires</h4>
+										<p className="text-sm text-gray-600">Explorer l'annuaire et la carte</p>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+
+						{/* Carte interactive */}
+						<Card className="cursor-pointer hover:shadow-md transition-shadow">
+							<CardContent className="p-6">
+								<div className="flex items-start space-x-4">
+									<div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+										<div className="w-6 h-6 text-orange-600">🗺️</div>
+									</div>
+									<div className="flex-1">
+										<h4 className="font-semibold text-gray-900 mb-1">Carte interactive</h4>
+										<p className="text-sm text-gray-600">Visualiser les entreprises proches</p>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+					</div>
+				</div>
+
+				{/* Hidden logout button for functionality */}
+				<div className="fixed bottom-4 right-4">
+					<Button 
+						variant="outline" 
+						size="sm"
+						onClick={handleLogout}
+						className="bg-white shadow-lg"
+					>
+						Se déconnecter
+					</Button>
+				</div>
+			</main>
 		</div>
 	)
 }

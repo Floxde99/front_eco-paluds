@@ -5,16 +5,19 @@ import { Toaster } from '@/components/ui/sonner'
 import LoginPage from '@/pages/login'
 import Home from '@/pages/home'
 import RequireAuth from '@/components/protected-route'
+import { AuthProvider } from '@/hooks/useAuth'
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Toaster />
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Toaster />
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
