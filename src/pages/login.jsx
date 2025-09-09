@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { loginUser, registerUser } from "@/services/Api"
+import { loginUser, registerUser, getCurrentUser } from "@/services/Api"
+import { AuthContext } from '@/hooks/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import LoginForm from "@/components/forms/LoginForm"
 import SignupForm from "@/components/forms/SignupForm"
@@ -26,6 +27,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
+  const auth = useContext(AuthContext)
 
   const loginSubmit = async (e) => {
     e.preventDefault()
@@ -41,6 +43,13 @@ const Login = () => {
       const data = await loginUser(loginValues)
       if (data?.accessToken) {
         localStorage.setItem('authToken', data.accessToken)
+        // Refresh auth context immediately so app updates without reload
+        try {
+          const me = await getCurrentUser()
+          if (me?.user && auth?.updateUser) auth.updateUser(me.user)
+        } catch (err) {
+          console.warn('Could not fetch current user after login', err)
+        }
       }
       toast.success('Connexion réussie')
       navigate('/home')
@@ -92,6 +101,13 @@ const Login = () => {
       const data = await registerUser(payload)
       if (data?.token) {
         localStorage.setItem('authToken', data.token)
+        // Refresh auth context after signup
+        try {
+          const me = await getCurrentUser()
+          if (me?.user && auth?.updateUser) auth.updateUser(me.user)
+        } catch (err) {
+          console.warn('Could not fetch current user after signup', err)
+        }
       }
       toast.success('Inscription réussie')
       navigate('/home')
