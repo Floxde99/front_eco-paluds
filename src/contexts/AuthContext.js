@@ -1,6 +1,9 @@
-import { useContext } from 'react'
-import { AuthContext } from './AuthContext'
+import { createContext, useContext } from 'react'
 
+// Auth Context
+export const AuthContext = createContext(null)
+
+// Auth Hook
 export function useAuth() {
   const context = useContext(AuthContext)
   if (!context) {

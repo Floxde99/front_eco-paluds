@@ -1,8 +1,8 @@
-import { useState, useContext } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { loginUser, registerUser, getCurrentUser } from "@/services/Api"
-import { AuthContext } from '@/hooks/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import LoginForm from "@/components/forms/LoginForm"
 import SignupForm from "@/components/forms/SignupForm"
@@ -27,7 +27,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
-  const auth = useContext(AuthContext)
+  const { updateUser } = useAuth()
 
   const loginSubmit = async (e) => {
     e.preventDefault()
@@ -43,16 +43,22 @@ const Login = () => {
       const data = await loginUser(loginValues)
       if (data?.accessToken) {
         localStorage.setItem('authToken', data.accessToken)
-        // Refresh auth context immediately so app updates without reload
+        
+        // Récupérer et définir l'utilisateur dans le contexte avant de naviguer
         try {
-          const me = await getCurrentUser()
-          if (me?.user && auth?.updateUser) auth.updateUser(me.user)
+          const userData = await getCurrentUser()
+          if (userData?.user) {
+            updateUser(userData.user)
+          }
         } catch (err) {
-          console.warn('Could not fetch current user after login', err)
+          console.error('Erreur lors de la récupération de l\'utilisateur:', err)
+          toast.error('Erreur lors de la connexion')
+          return
         }
+        
+        toast.success('Connexion réussie')
+        navigate('/home')
       }
-      toast.success('Connexion réussie')
-      navigate('/home')
     } catch (err) {
       console.error('Login error', err)
       const msg = err?.response?.data?.error || err.message || 'Erreur réseau'
@@ -101,16 +107,22 @@ const Login = () => {
       const data = await registerUser(payload)
       if (data?.token) {
         localStorage.setItem('authToken', data.token)
-        // Refresh auth context after signup
+        
+        // Récupérer et définir l'utilisateur dans le contexte avant de naviguer
         try {
-          const me = await getCurrentUser()
-          if (me?.user && auth?.updateUser) auth.updateUser(me.user)
+          const userData = await getCurrentUser()
+          if (userData?.user) {
+            updateUser(userData.user)
+          }
         } catch (err) {
-          console.warn('Could not fetch current user after signup', err)
+          console.error('Erreur lors de la récupération de l\'utilisateur:', err)
+          toast.error('Erreur lors de l\'inscription')
+          return
         }
+        
+        toast.success('Inscription réussie')
+        navigate('/home')
       }
-      toast.success('Inscription réussie')
-      navigate('/home')
     } catch (err) {
       console.error('Signup error:', err)
       console.log('Error response:', err?.response?.data)

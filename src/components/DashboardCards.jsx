@@ -1,13 +1,30 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useProfile } from '@/hooks/useProfile'
-import { useDashboard } from '@/hooks/useDashboard'
+import { useDashboardData } from '@/hooks/useDashboardQuery'
 import { ProgressBar } from './ProgressBar'
 
 // Profile Completion Card
 export function ProfileCard() {
-  const { completion, loading } = useProfile()
+  const { completion, loading, error } = useDashboardData()
+
+  if (error) {
+    return (
+      <Card className="lg:col-span-1">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-medium">Profil entreprise</CardTitle>
+            <div className="w-4 h-4 text-gray-400">✏️</div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-500 text-sm">
+            Erreur de chargement
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="lg:col-span-1">
@@ -23,13 +40,25 @@ export function ProfileCard() {
             <div className="flex justify-between text-sm mb-1">
               <span className="text-gray-600">Complétude :</span>
               <span className="font-medium">
-                {loading ? '...' : `${completion?.completion_percentage || 0}%`}
+                {loading ? '...' : `${completion?.completion?.percentage || 0}%`}
               </span>
             </div>
             <ProgressBar 
-              percentage={completion?.completion_percentage || 0} 
+              percentage={completion?.completion?.percentage || 0} 
               loading={loading}
             />
+            {!loading && completion?.completion && (
+              <div className="mt-2 space-y-1">
+                <p className="text-sm text-gray-500">
+                  {completion.completion.score || 0} / {completion.completion.total || 8} champs remplis
+                </p>
+                {completion.completion.missing?.company && (
+                  <p className="text-xs text-orange-600">
+                    ⚠️ Nom de l'entreprise manquant
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           <Button className="w-full bg-blue-600 hover:bg-blue-700">
             Compléter mon profil
@@ -42,7 +71,7 @@ export function ProfileCard() {
 
 // Suggestions Card
 export function SuggestionsCard() {
-  const { stats, loading } = useDashboard()
+  const { stats, loading } = useDashboardData()
 
   const newCount = stats?.user_stats?.recent_connections || 0
   const totalCount = stats?.user_stats?.active_inputs + stats?.user_stats?.active_outputs || 0
@@ -89,7 +118,7 @@ export function SuggestionsCard() {
 
 // Network Card
 export function NetworkCard() {
-  const { stats, companies, loading } = useDashboard()
+  const { stats, companies, loading } = useDashboardData()
 
   const connectedCount = companies?.length || 0
   const partnershipsCount = stats?.user_stats?.companies_owned || 0
@@ -132,7 +161,7 @@ export function NetworkCard() {
 
 // Activity Card
 export function ActivityCard() {
-  const { stats, loading } = useDashboard()
+  const { stats, loading } = useDashboardData()
 
   const activities = stats?.recent_activities || []
 

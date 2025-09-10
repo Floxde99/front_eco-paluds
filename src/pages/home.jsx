@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { logoutUser } from '@/services/Api'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/hooks/useAuthHook'
+import { useAuth } from '@/contexts/AuthContext'
 import { ProfileHeader } from '@/components/ProfileHeader'
 import { ProfileCard, SuggestionsCard, NetworkCard, ActivityCard } from '@/components/DashboardCards'
 
@@ -26,22 +26,26 @@ export default function Home() {
 
 	const handleLogout = async () => {
 		try {
-			await logoutUser()
+			const res = await logoutUser()
+			// clear local auth context regardless
 			logout()
-			toast.success('Déconnexion réussie')
-			navigate('/login')
-		} catch (err) {
-			console.error('Logout error', err)
-			logout()
-			
-			if (err?.response?.status >= 500) {
-				toast.info('Déconnecté localement (erreur serveur)')
-			} else if (err?.response?.status === 401 || err?.response?.status === 403) {
-				toast.info('Session expirée, redirection vers la connexion')
+
+			if (res?.ok) {
+				toast.success('Déconnexion réussie côté serveur')
+			} else if (res?.status === 401 || res?.status === 403) {
+				toast.info('Session déjà expirée côté serveur — déconnecté localement')
+			} else if (res?.status >= 500) {
+				toast.info('Déconnecté localement (erreur serveur lors de la révocation)')
 			} else {
 				toast.info('Déconnecté localement')
 			}
-			
+
+			navigate('/login')
+		} catch (err) {
+			// Network or unexpected error — still clear local session
+			console.error('Logout error', err)
+			logout()
+			toast.info('Déconnecté localement')
 			navigate('/login')
 		}
 	}

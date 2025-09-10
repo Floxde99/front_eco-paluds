@@ -1,16 +1,15 @@
 import React, { useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/hooks/useAuthHook'
-import { useProfile } from '@/hooks/useProfile'
+import { useAuth } from '@/contexts/AuthContext'
+import { useProfileNew } from '@/hooks/useProfileNew'
 import { toast } from 'sonner'
 
 export function ProfileHeader() {
   const { user } = useAuth()
-  const { updateAvatar, updating } = useProfile()
+  const { updateAvatar, isUploadingAvatar } = useProfileNew()
   const fileInputRef = useRef(null)
 
   const handleAvatarClick = () => {
-    // Réactiver la fonctionnalité avec l'implémentation temporaire
     fileInputRef.current?.click()
   }
 
@@ -32,8 +31,9 @@ export function ProfileHeader() {
 
     try {
       await updateAvatar(file)
+      // Success toast is handled in the mutation
     } catch {
-      // Error already handled in hook
+      // Error already handled in mutation
     }
   }
 
@@ -78,9 +78,9 @@ export function ProfileHeader() {
       <div className="relative">
         <button
           onClick={handleAvatarClick}
-          disabled={updating}
+          disabled={isUploadingAvatar}
           className="relative w-8 h-8 rounded-full overflow-hidden hover:opacity-80 transition-opacity disabled:cursor-not-allowed"
-          title="Upload d'avatar (en développement)"
+          title="Cliquer pour changer l'avatar"
         >
           {getAvatarUrl() ? (
             <img
@@ -102,7 +102,7 @@ export function ProfileHeader() {
               {getInitials()}
             </span>
           </div>
-          {updating && (
+          {isUploadingAvatar && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             </div>

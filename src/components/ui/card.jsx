@@ -10,8 +10,8 @@ function Card({
     <div
       data-slot="card"
       className={cn(
-        // light card with subtle border and rounded corners like the mock
-        "bg-white text-card-foreground flex flex-col gap-6 rounded-lg border border-gray-200 py-6 shadow-sm",
+  // light card with subtle border and rounded corners
+  "bg-white text-card-foreground flex flex-col gap-6 rounded-lg border border-gray-200 py-6 shadow-sm",
         className
       )}
       {...props} />

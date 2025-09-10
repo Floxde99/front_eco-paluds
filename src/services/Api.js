@@ -18,6 +18,13 @@ api.interceptors.request.use(
 			// Don't send Authorization header for logout since it uses cookies
 			config.headers.Authorization = `Bearer ${token}`
 		}
+		// If body is FormData, don't let any transformRequest change it
+		if (config.data instanceof FormData) {
+			// ensure Content-Type is not manually set so browser sets boundary
+			if (config.headers && config.headers['Content-Type']) {
+				delete config.headers['Content-Type']
+			}
+		}
 		return config
 	},
 	(error) => {
@@ -42,15 +49,23 @@ export async function logoutUser() {
 		// Your backend logout expects refreshToken from cookies, not Authorization header
 		// Since withCredentials: true is set, cookies will be sent automatically
 		const res = await api.post('/logout')
-		return res.data
+
+	// Always clear local session on logout attempt
+	if (typeof localStorage !== 'undefined') localStorage.removeItem('authToken')
+
+		return { ok: true, status: res.status, data: res.data }
 	} catch (err) {
-		// Handle various logout errors gracefully
-		if (err?.response?.status === 500 || err?.response?.status === 401 || err?.response?.status === 403) {
-			// If server error, no token, or forbidden - treat as successful logout
-			// The user wants to logout anyway, so clear their session locally
-			return { message: 'Déconnecté localement' }
+	// Always clear local session even if server returns an error
+	if (typeof localStorage !== 'undefined') localStorage.removeItem('authToken')
+
+		// If server responded, return structured info; otherwise propagate network error
+		if (err?.response) {
+			const status = err.response.status
+			const body = err.response.data
+			return { ok: false, status, body }
 		}
-		// Re-throw other errors
+
+		// network / unexpected error - rethrow for caller to handle
 		throw err
 	}
 }
@@ -69,32 +84,33 @@ export async function updateUserProfile(profileData) {
 export async function uploadAvatar(file) {
 	console.log('📤 Upload avatar - fichier:', file)
 	const formData = new FormData()
-	// Important: inclure le nom de fichier pour certains middlewares multer/busboy
 	formData.append('avatar', file, file.name)
-	
-	// Vérification debug
+
 	console.log('📤 FormData créé:', formData.get('avatar'))
-	
-	// Utiliser fetch au lieu d'axios pour éviter les problèmes de transformation
-	const token = localStorage.getItem('authToken')
-	const response = await fetch(`${API_BASE_URL}/user/avatar`, {
-		method: 'POST',
-		headers: {
-			'Authorization': `Bearer ${token}`,
-			// Pas de Content-Type - le navigateur l'ajoutera automatiquement avec boundary
-		},
-		credentials: 'include',
-		body: formData
-	})
-	
-	if (!response.ok) {
-		const errorText = await response.text()
-		console.error('❌ Erreur upload:', response.status, errorText)
-		throw new Error(`HTTP ${response.status}: ${errorText}`)
+
+	try {
+		// Use axios instance which already sets baseURL and withCredentials
+		const res = await api.post('/user/avatar', formData, {
+			headers: {
+				// let the browser set Content-Type (multipart + boundary)
+				// Authorization header is already injected by interceptor, but set here as fallback
+				Authorization: localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')}` : undefined
+			},
+			maxBodyLength: Infinity,
+			maxContentLength: Infinity,
+		})
+
+		return res.data
+	} catch (err) {
+		// Normalize axios error to match previous structured error shape
+		const status = err?.response?.status
+		const body = err?.response?.data
+		console.error('❌ Erreur upload (axios):', status, body)
+		const e = new Error(body?.message || err.message || `HTTP ${status || 'ERR'}`)
+		e.status = status
+		e.body = body
+		throw e
 	}
-	
-	const data = await response.json()
-	return data
 }
 
 export async function getProfileCompletion() {

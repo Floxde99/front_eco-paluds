@@ -1,49 +1,27 @@
 import { useState, useEffect } from 'react'
-import { getCurrentUser } from '@/services/Api'
-import { AuthContext } from './AuthContext'
+import { AuthContext } from '@/contexts/AuthContext'
+import { useCurrentUser } from '@/hooks/useAuthQuery'
 
+// Auth Provider Component
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Utiliser React Query pour récupérer l'utilisateur (avec déduplication)
+  const { data: userData, isLoading, error: queryError } = useCurrentUser()
+
   useEffect(() => {
-    let mounted = true
+    // Mettre à jour l'état local basé sur les données React Query
+    setUser(userData?.user ?? null)
+    setLoading(isLoading)
+    setError(queryError)
 
-    const fetchUser = async () => {
-      const token = localStorage.getItem('authToken')
-
-      if (!token) {
-        if (mounted) setLoading(false)
-        return
-      }
-
-      try {
-        const userData = await getCurrentUser()
-        if (mounted) {
-          setUser(userData?.user ?? null)
-          setError(null)
-        }
-      } catch (err) {
-        console.error('Auth error:', err)
-        if (mounted) {
-          setError(err)
-          // If token is invalid, remove it
-          if (err?.response?.status === 401 || err?.response?.status === 403) {
-            localStorage.removeItem('authToken')
-          }
-        }
-      } finally {
-        if (mounted) setLoading(false)
-      }
+    // Si le token est invalide, le supprimer
+    if (queryError?.response?.status === 401 || queryError?.response?.status === 403) {
+      localStorage.removeItem('authToken')
     }
-
-    fetchUser()
-
-    return () => {
-      mounted = false
-    }
-  }, [])
+  }, [userData, isLoading, queryError])
 
   const updateUser = (userData) => {
     setUser(userData)
