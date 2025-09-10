@@ -9,7 +9,9 @@ export function FormInput({
   onChange, 
   placeholder, 
   required = false,
-  helpText 
+  helpText,
+  isInvalid = false,
+  errorMessage
 }) {
   return (
     <div>
@@ -21,8 +23,10 @@ export function FormInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
+        className={isInvalid ? "border-red-500 focus:ring-red-500/60" : ""}
       />
-      {helpText && <p className="text-xs text-muted-foreground mt-1">{helpText}</p>}
+      {helpText && !isInvalid && <p className="text-xs text-muted-foreground mt-1">{helpText}</p>}
+      {isInvalid && errorMessage && <p className="text-xs text-red-600 mt-1">{errorMessage}</p>}
     </div>
   )
 }

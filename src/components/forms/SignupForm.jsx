@@ -6,7 +6,8 @@ export function SignupForm({
   onInputChange, 
   onSubmit, 
   loading, 
-  onSwitchToLogin 
+  onSwitchToLogin,
+  fieldErrors = {}
 }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -16,6 +17,8 @@ export function SignupForm({
         value={values.company}
         onChange={(value) => onInputChange('company', value)}
         placeholder="Votre entreprise"
+        isInvalid={!!fieldErrors.company}
+        errorMessage={fieldErrors.company}
       />
       
       <div className="grid grid-cols-2 gap-2">
@@ -26,6 +29,8 @@ export function SignupForm({
           onChange={(value) => onInputChange('lastName', value)}
           placeholder="Votre nom"
           required
+          isInvalid={!!fieldErrors.lastName}
+          errorMessage={fieldErrors.lastName}
         />
         <FormInput
           id="firstName"
@@ -34,6 +39,8 @@ export function SignupForm({
           onChange={(value) => onInputChange('firstName', value)}
           placeholder="Votre prénom"
           required
+          isInvalid={!!fieldErrors.firstName}
+          errorMessage={fieldErrors.firstName}
         />
       </div>
       
@@ -45,6 +52,8 @@ export function SignupForm({
         onChange={(value) => onInputChange('email', value)}
         placeholder="contact@entreprise.com"
         required
+        isInvalid={!!fieldErrors.email}
+        errorMessage={fieldErrors.email}
       />
       
       <FormInput
@@ -55,6 +64,8 @@ export function SignupForm({
         onChange={(value) => onInputChange('password', value)}
         required
         helpText="Minimum 8 caractères"
+        isInvalid={!!fieldErrors.password}
+        errorMessage={fieldErrors.password}
       />
       
       <FormInput
@@ -64,6 +75,8 @@ export function SignupForm({
         value={values.confirmPassword}
         onChange={(value) => onInputChange('confirmPassword', value)}
         required
+        isInvalid={!!fieldErrors.confirmPassword}
+        errorMessage={fieldErrors.confirmPassword}
       />
       
       <FormInput
@@ -73,6 +86,8 @@ export function SignupForm({
         value={values.phone}
         onChange={(value) => onInputChange('phone', value)}
         placeholder="Votre numéro"
+        isInvalid={!!fieldErrors.phone}
+        errorMessage={fieldErrors.phone}
       />
       
       <Button type="submit" className="w-full" variant="success" disabled={loading}>

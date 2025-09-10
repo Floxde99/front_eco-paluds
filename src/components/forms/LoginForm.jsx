@@ -6,7 +6,8 @@ export function LoginForm({
   onInputChange, 
   onSubmit, 
   loading, 
-  onSwitchToSignup 
+  onSwitchToSignup,
+  fieldErrors = {}
 }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -18,6 +19,8 @@ export function LoginForm({
         onChange={(value) => onInputChange('email', value)}
         placeholder="votre@email.com"
         required
+        isInvalid={!!fieldErrors.email}
+        errorMessage={fieldErrors.email}
       />
       
       <FormInput
@@ -27,6 +30,8 @@ export function LoginForm({
         value={values.password}
         onChange={(value) => onInputChange('password', value)}
         required
+        isInvalid={!!fieldErrors.password}
+        errorMessage={fieldErrors.password}
       />
       
       <Button type="submit" className="w-full" disabled={loading}>

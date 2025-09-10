@@ -70,6 +70,12 @@ export async function logoutUser() {
 	}
 }
 
+// Confirmer l'email avec le token
+export async function confirmEmail(token) {
+	const res = await api.post('/confirm-email', { token })
+	return res.data
+}
+
 // Profile & User API functions
 export async function getCurrentUser() {
 	const res = await api.get('/user/profile')
