@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { getCurrentUser, updateUserProfile, uploadAvatar } from '@/services/Api'
+import { getCurrentUser, updateUserProfile, uploadAvatar, deleteAvatar } from '@/services/Api'
 import { dashboardKeys } from './useDashboardQuery'
 
 // Query keys for auth/profile
@@ -80,7 +80,20 @@ export function useUploadAvatar() {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: uploadAvatar,
+    mutationFn: async (file) => {
+      // 🗑️ SUPPRIMER L'ANCIEN AVATAR AVANT L'UPLOAD
+      try {
+        console.log('🗑️ Suppression de l\'ancien avatar...')
+        await deleteAvatar()
+        console.log('✅ Ancien avatar supprimé')
+      } catch (deleteError) {
+        console.warn('⚠️ Impossible de supprimer l\'ancien avatar:', deleteError.message)
+        // Ne pas bloquer l'upload si la suppression échoue
+      }
+      
+      // 📤 UPLOADER LE NOUVEAU AVATAR
+      return uploadAvatar(file)
+    },
     // Optimistic update
     onMutate: async (file) => {
       await queryClient.cancelQueries({ queryKey: authKeys.user() })
@@ -107,7 +120,7 @@ export function useUploadAvatar() {
         URL.revokeObjectURL(context.tempAvatarUrl)
       }
       
-      // Update with real avatar URL
+      // Update with real avatar URL + force refresh
       if (data?.user?.avatar_url) {
         queryClient.setQueryData(authKeys.user(), (old) => ({
           ...old,
@@ -115,9 +128,13 @@ export function useUploadAvatar() {
             ...old?.user,
             avatar_url: data.user.avatar_url,
             _isOptimistic: false,
+            _lastUpdate: Date.now(), // 🔥 AJOUT : Timestamp pour forcer re-render
           }
         }))
       }
+      
+      // 🔥 AJOUT : Invalidation forcée du cache
+      queryClient.invalidateQueries({ queryKey: authKeys.user(), refetchType: 'none' })
       
       // Invalidate completion as avatar affects profile completion
       queryClient.invalidateQueries({ queryKey: dashboardKeys.completion() })

@@ -119,6 +119,39 @@ export async function uploadAvatar(file) {
 	}
 }
 
+export async function deleteAvatar() {
+	try {
+		const res = await api.delete('/user/avatar')
+		return res.data
+	} catch (err) {
+		// Si l'avatar n'existe pas, c'est pas une erreur
+		if (err?.response?.status === 404) {
+			return { message: 'Aucun avatar à supprimer' }
+		}
+		throw err
+	}
+}
+
+// 🔥 AJOUT : Fonction pour récupérer l'avatar
+export async function getAvatar() {
+	try {
+		const res = await api.get('/user/avatar', {
+			responseType: 'blob', // Important pour les images
+			timeout: 30000, // Timeout plus long pour les images
+		})
+		return res.data
+	} catch (err) {
+		// Gestion spécifique des erreurs
+		const status = err?.response?.status
+		const body = err?.response?.data
+		console.error('❌ Erreur récupération avatar:', status, body)
+		const e = new Error(body?.message || err.message || `HTTP ${status || 'ERR'}`)
+		e.status = status
+		e.body = body
+		throw e
+	}
+}
+
 export async function getProfileCompletion() {
 	const res = await api.get('/user/completion')
 	return res.data
