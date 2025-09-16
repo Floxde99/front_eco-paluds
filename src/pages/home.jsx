@@ -68,7 +68,7 @@ export default function Home() {
 			<header className="bg-white border-b border-gray-200 px-6 py-4">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center space-x-3">
-						<div className="w-10 h-10 bg-gray-600 rounded-lg"></div>
+						<img src="/logo.jpg" alt="EcoConnect Paluds Logo" className="w-10 h-10 rounded-lg object-cover" />
 						<h1 className="text-xl font-semibold text-gray-900">EcoConnect Paluds</h1>
 					</div>
 					<div className="flex items-center space-x-4">
