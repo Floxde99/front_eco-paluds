@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { loginUser, registerUser, getCurrentUser } from "@/services/Api"
 import { useAuth } from '@/contexts/AuthContext'
@@ -13,6 +13,7 @@ const Login = () => {
   const [error, setError] = useState(null)
   const navigate = useNavigate()
   const { updateUser } = useAuth()
+  const [searchParams] = useSearchParams()
 
   // État pour les erreurs de validation par champ
   const [fieldErrors, setFieldErrors] = useState({})
@@ -23,6 +24,14 @@ const Login = () => {
     setError(null) // Reset les erreurs
     setFieldErrors({}) // Reset les erreurs de champs
   }
+
+  // Lire le query param ?mode=signup pour ouvrir directement le formulaire d'inscription
+  useEffect(() => {
+    const qMode = searchParams.get('mode')
+    if (qMode === 'signup') {
+      setMode('signup')
+    }
+  }, [searchParams])
   const [loginValues, setLoginValues] = useState({
     email: "",
     password: ""
