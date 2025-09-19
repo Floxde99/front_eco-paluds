@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Utilisation des variables d'environnement Vite
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.eco-paluds.fr";
 const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT || 10000;
 
@@ -15,12 +14,9 @@ api.interceptors.request.use(
 	(config) => {
 		const token = localStorage.getItem('authToken')
 		if (token && config.url !== '/logout') {
-			// Don't send Authorization header for logout since it uses cookies
 			config.headers.Authorization = `Bearer ${token}`
 		}
-		// If body is FormData, don't let any transformRequest change it
 		if (config.data instanceof FormData) {
-			// ensure Content-Type is not manually set so browser sets boundary
 			if (config.headers && config.headers['Content-Type']) {
 				delete config.headers['Content-Type']
 			}
@@ -34,7 +30,6 @@ api.interceptors.request.use(
 
 // Centralized API helpers
 export async function registerUser(payload) {
-	// payload expected to match backend (firstName, lastName, email, password, confirmPassword, ...)
 	const res = await api.post('/addUser', payload)
 	return res.data
 }
@@ -46,26 +41,20 @@ export async function loginUser({ email, password }) {
 
 export async function logoutUser() {
 	try {
-		// Your backend logout expects refreshToken from cookies, not Authorization header
-		// Since withCredentials: true is set, cookies will be sent automatically
 		const res = await api.post('/logout')
 
-	// Always clear local session on logout attempt
 	if (typeof localStorage !== 'undefined') localStorage.removeItem('authToken')
 
 		return { ok: true, status: res.status, data: res.data }
 	} catch (err) {
-	// Always clear local session even if server returns an error
 	if (typeof localStorage !== 'undefined') localStorage.removeItem('authToken')
 
-		// If server responded, return structured info; otherwise propagate network error
 		if (err?.response) {
 			const status = err.response.status
 			const body = err.response.data
 			return { ok: false, status, body }
 		}
 
-		// network / unexpected error - rethrow for caller to handle
 		throw err
 	}
 }
@@ -88,18 +77,12 @@ export async function updateUserProfile(profileData) {
 }
 
 export async function uploadAvatar(file) {
-	console.log('📤 Upload avatar - fichier:', file)
 	const formData = new FormData()
 	formData.append('avatar', file, file.name)
 
-	console.log('📤 FormData créé:', formData.get('avatar'))
-
 	try {
-		// Use axios instance which already sets baseURL and withCredentials
 		const res = await api.post('/user/avatar', formData, {
 			headers: {
-				// let the browser set Content-Type (multipart + boundary)
-				// Authorization header is already injected by interceptor, but set here as fallback
 				Authorization: localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')}` : undefined
 			},
 			maxBodyLength: Infinity,
@@ -108,10 +91,8 @@ export async function uploadAvatar(file) {
 
 		return res.data
 	} catch (err) {
-		// Normalize axios error to match previous structured error shape
 		const status = err?.response?.status
 		const body = err?.response?.data
-		console.error('❌ Erreur upload (axios):', status, body)
 		const e = new Error(body?.message || err.message || `HTTP ${status || 'ERR'}`)
 		e.status = status
 		e.body = body
@@ -124,7 +105,6 @@ export async function deleteAvatar() {
 		const res = await api.delete('/user/avatar')
 		return res.data
 	} catch (err) {
-		// Si l'avatar n'existe pas, c'est pas une erreur
 		if (err?.response?.status === 404) {
 			return { message: 'Aucun avatar à supprimer' }
 		}
@@ -132,19 +112,16 @@ export async function deleteAvatar() {
 	}
 }
 
-// 🔥 AJOUT : Fonction pour récupérer l'avatar
 export async function getAvatar() {
 	try {
 		const res = await api.get('/user/avatar', {
-			responseType: 'blob', // Important pour les images
-			timeout: 30000, // Timeout plus long pour les images
+			responseType: 'blob',
+			timeout: 30000,
 		})
 		return res.data
 	} catch (err) {
-		// Gestion spécifique des erreurs
 		const status = err?.response?.status
 		const body = err?.response?.data
-		console.error('❌ Erreur récupération avatar:', status, body)
 		const e = new Error(body?.message || err.message || `HTTP ${status || 'ERR'}`)
 		e.status = status
 		e.body = body
@@ -166,6 +143,8 @@ export async function getUserCompanies() {
 	const res = await api.get('/user/companies')
 	return res.data
 }
+
+export * from './CompanyProfileApi.js'
 
 export default api;
 

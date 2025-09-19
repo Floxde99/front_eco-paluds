@@ -9,76 +9,49 @@ export function ProfileHeader() {
   const { user } = useAuth()
   const { updateAvatar, isUploadingAvatar } = useProfileNew()
   const fileInputRef = useRef(null)
-  const [avatarBlobUrl, setAvatarBlobUrl] = useState(null) // 🔥 AJOUT : URL blob pour l'avatar
-  const [avatarLoading, setAvatarLoading] = useState(false) // 🔥 AJOUT : État de chargement
-  const [avatarFetched, setAvatarFetched] = useState(false) // 🔥 AJOUT : État pour éviter les appels répétés
-  const [previousUserId, setPreviousUserId] = useState(user?.id) // 🔥 AJOUT : Suivi du changement d'utilisateur
-  const fetchAvatarRef = useRef(null) // 🔥 AJOUT : Ref pour éviter les dépendances circulaires
-  const retryTimeoutRef = useRef(null) // 🔥 AJOUT : Ref pour gérer les timeouts
-  const isFetchingRef = useRef(false) // 🔥 AJOUT : Empêche les requêtes parallèles (StrictMode double mount)
+  const [avatarBlobUrl, setAvatarBlobUrl] = useState(null)
+  const [avatarLoading, setAvatarLoading] = useState(false)
+  const [avatarFetched, setAvatarFetched] = useState(false)
+  const [previousUserId, setPreviousUserId] = useState(user?.id)
+  const fetchAvatarRef = useRef(null)
+  const retryTimeoutRef = useRef(null)
+  const isFetchingRef = useRef(false)
 
-  // 🔥 AJOUT : Effet pour détecter les changements d'avatar
-  useEffect(() => {
-    if (user?.avatar_url) {
-      // Plus besoin de forcer le re-render avec une clé
-    }
-  }, [user?.avatar_url])
-
-  // 🔥 CORRECTION : Fonction optimisée avec cache
   const fetchAvatar = useCallback(async () => {
-    // Éviter les appels répétés ou parallèles
     if (!user?.avatar_url || avatarFetched || isFetchingRef.current) {
       return
     }
 
-    // Marquer immédiatement comme "fetch en cours / déjà traité" pour bloquer le second passage StrictMode
     isFetchingRef.current = true
-    setAvatarFetched(true) // ✅ Marqué tôt pour empêcher un second appel concurrent (StrictMode remount)
+    setAvatarFetched(true)
     setAvatarLoading(true)
     
     try {
-      console.log('🔄 Récupération avatar via API...')
       const blob = await getAvatar()
       const blobUrl = URL.createObjectURL(blob)
-      console.log('✅ Avatar récupéré avec succès')
       setAvatarBlobUrl(blobUrl)
     } catch (error) {
-      console.error('❌ Erreur récupération avatar:', error?.status || error?.message, error)
-      // Gestion spécifique des erreurs HTTP
       if (error?.status === 404) {
-        console.log('ℹ️ Aucun avatar trouvé')
         setAvatarBlobUrl(null)
-      } else if (error?.status === 429) {
-        console.warn('⚠️ Limite de débit atteinte, aucune nouvelle tentative')
-      } else if (error?.status === 401) {
-        console.error('❌ Token invalide ou expiré')
-      } else if (error?.status === 403) {
-        console.error('❌ Accès refusé')
-      } else {
-        console.error('❌ Erreur réseau ou serveur')
       }
       setAvatarBlobUrl(null)
     } finally {
       setAvatarLoading(false)
-      isFetchingRef.current = false // (On pourrait le laisser à true si on veut vraiment ne jamais retenter avant reset explicite)
+      isFetchingRef.current = false
     }
   }, [user?.avatar_url, avatarFetched])
 
-  // 🔥 AJOUT : Stocker la fonction dans le ref
   useEffect(() => {
     fetchAvatarRef.current = fetchAvatar
   }, [fetchAvatar])
 
-  // 🔥 CORRECTION : useEffect pour gérer les changements d'utilisateur
   useEffect(() => {
     if (user?.id !== previousUserId) {
       setPreviousUserId(user?.id)
-      // Reset tous les états quand l'utilisateur change
       setAvatarFetched(false)
       setAvatarBlobUrl(null)
       setAvatarLoading(false)
       isFetchingRef.current = false
-      // 🔥 AJOUT : Nettoyer les timeouts existants
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current)
         retryTimeoutRef.current = null
@@ -86,21 +59,17 @@ export function ProfileHeader() {
     }
   }, [user?.id, previousUserId])
 
-  // 🔥 CORRECTION : useEffect pour charger l'avatar automatiquement (utilise le ref)
   useEffect(() => {
-    // Appeler fetchAvatar seulement si nécessaire et pas déjà en cours
     if (user?.avatar_url && !avatarFetched && !avatarLoading && fetchAvatarRef.current) {
       fetchAvatarRef.current()
     }
-  }, [user?.avatar_url, avatarFetched, avatarLoading]) // Plus de dépendance à fetchAvatar
+  }, [user?.avatar_url, avatarFetched, avatarLoading])
 
-  // 🔥 CORRECTION : Cleanup amélioré
   useEffect(() => {
     return () => {
       if (avatarBlobUrl) {
         URL.revokeObjectURL(avatarBlobUrl)
       }
-      // 🔥 AJOUT : Nettoyer les timeouts au démontage
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current)
         retryTimeoutRef.current = null
@@ -130,10 +99,8 @@ export function ProfileHeader() {
 
     try {
       await updateAvatar(file)
-      // 🔥 CORRECTION : Reset de l'état après upload
       setAvatarFetched(false)
       setAvatarBlobUrl(null)
-      // Recharger après un court délai en utilisant le ref
       setTimeout(() => {
         if (fetchAvatarRef.current) {
           fetchAvatarRef.current()
@@ -177,23 +144,19 @@ export function ProfileHeader() {
           title="Cliquer pour changer l'avatar"
         >
           {avatarLoading ? (
-            // 🔥 AJOUT : Spinner de chargement
             <div className="w-full h-full bg-gray-200 flex items-center justify-center">
               <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : avatarBlobUrl ? (
-            // 🔥 AJOUT : Image chargée via fetch
             <img
               src={avatarBlobUrl}
               alt={getDisplayName()}
               className="w-full h-full object-cover"
               onError={() => {
-                console.log('❌ Erreur affichage blob avatar')
                 setAvatarBlobUrl(null)
               }}
             />
           ) : (
-            // 🔥 AJOUT : Fallback avec initiales
             <div className="w-full h-full bg-blue-500 flex items-center justify-center">
               <span className="text-white text-sm font-medium">
                 {getInitials()}

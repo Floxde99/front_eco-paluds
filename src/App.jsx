@@ -6,6 +6,7 @@ import LoginPage from '@/pages/login'
 import Home from '@/pages/home'
 import Landing from '@/pages/landing'
 import ConfirmEmail from '@/pages/ConfirmEmail'
+import CompanyProfile from '@/pages/CompanyProfile'
 import MentionsLegales from '@/pages/legal/MentionsLegales'
 import PolitiqueConfidentialite from '@/pages/legal/PolitiqueConfidentialite'
 import CGU from '@/pages/legal/CGU'
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/confirm-email" element={<ConfirmEmail />} />
             <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
+            <Route path="/profile" element={<RequireAuth><CompanyProfile /></RequireAuth>} />
             <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
             <Route path="/cgu" element={<CGU />} />

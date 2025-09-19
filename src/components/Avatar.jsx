@@ -4,14 +4,6 @@ import { useAvatar } from '@/hooks/useAvatar'
 export function Avatar({ size = 'md', showName = false, className = '' }) {
   const { avatarBlobUrl, avatarLoading, getInitials, getDisplayName } = useAvatar()
 
-  // Debug logs
-  console.log('🔍 Avatar Debug:', {
-    avatarBlobUrl: !!avatarBlobUrl,
-    avatarLoading,
-    initials: getInitials(),
-    displayName: getDisplayName()
-  })
-
   const sizeClasses = {
     sm: 'w-6 h-6',
     md: 'w-8 h-8',
@@ -36,9 +28,7 @@ export function Avatar({ size = 'md', showName = false, className = '' }) {
             src={avatarBlobUrl}
             alt={getDisplayName()}
             className="w-full h-full object-cover"
-            onError={() => {
-              console.log('❌ Erreur affichage avatar')
-            }}
+            onError={() => {}}
           />
         ) : (
           <div className="w-full h-full bg-blue-500 flex items-center justify-center">

@@ -48,10 +48,8 @@ const Login = () => {
   })
 
   // Fonctions helper pour gérer le succès et les erreurs
-  const handleSignupSuccess = (data) => {
-    console.log('✅ Signup success:', data)
+  const handleSignupSuccess = () => {
     
-    // Reset le formulaire
     setSignupValues({
       firstName: "",
       lastName: "",
@@ -233,12 +231,8 @@ const Login = () => {
 
     try {
       setLoading(true)
-      const data = await registerUser(payload)
-      console.log('Signup response:', data)
+      await registerUser(payload)
       
-      // ✅ SUCCÈS : Inscription réussie, email de confirmation envoyé
-      // Vérifier que la requête a réussi (pas d'erreur levée)
-      // Reset le formulaire
       setSignupValues({
         firstName: "",
         lastName: "",
@@ -275,7 +269,6 @@ const Login = () => {
         
         // Si le 409 contient des données qui ressemblent à une réponse de succès
         if (errorData?.user || errorData?.message?.includes('success') || errorData?.email) {
-          console.log('🎯 409 with success data detected:', errorData)
           handleSignupSuccess(errorData)
           return
         }

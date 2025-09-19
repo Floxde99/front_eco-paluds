@@ -36,7 +36,6 @@ export function useProfileCompletion() {
     queryFn: async () => {
       try {
         const data = await getProfileCompletion()
-        console.log('📊 Profile completion data:', data)
         return data
       } catch (error) {
         console.error('❌ Error fetching profile completion:', error)

@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Avatar } from '@/components/Avatar'
+import { logoutUser } from '@/services/Api'
+import { toast } from 'sonner'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,9 +28,28 @@ export default function Navbar() {
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
+  const handleLogout = async () => {
+    try {
+      const res = await logoutUser()
+      // clear local auth context regardless
+      logout()
+
+      if (res?.ok) {
+        toast.success('Déconnexion réussie côté serveur')
+      } else if (res?.status === 401 || res?.status === 403) {
+        toast.info('Session déjà expirée côté serveur — déconnecté localement')
+      } else if (res?.status >= 500) {
+        toast.info('Déconnecté localement (erreur serveur lors de la révocation)')
+      } else {
+        toast.info('Déconnecté localement')
+      }
+
+      navigate('/')
+    } catch {
+      logout()
+      toast.info('Déconnecté localement')
+      navigate('/')
+    }
   }
 
   const navigationItems = [

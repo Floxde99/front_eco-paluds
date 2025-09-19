@@ -83,9 +83,7 @@ export function useUploadAvatar() {
     mutationFn: async (file) => {
       // 🗑️ SUPPRIMER L'ANCIEN AVATAR AVANT L'UPLOAD
       try {
-        console.log('🗑️ Suppression de l\'ancien avatar...')
         await deleteAvatar()
-        console.log('✅ Ancien avatar supprimé')
       } catch (deleteError) {
         console.warn('⚠️ Impossible de supprimer l\'ancien avatar:', deleteError.message)
         // Ne pas bloquer l'upload si la suppression échoue

@@ -27,9 +27,7 @@ export function useAvatar() {
       const blob = await getAvatar()
       const blobUrl = URL.createObjectURL(blob)
       setAvatarBlobUrl(blobUrl)
-    } catch (error) {
-      console.error('❌ Erreur récupération avatar:', error?.status || error?.message)
-      // Si pas d'avatar trouvé (404), ce n'est pas grave, on affichera les initiales
+    } catch {
       setAvatarBlobUrl(null)
     } finally {
       setAvatarLoading(false)
