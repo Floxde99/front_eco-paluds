@@ -10,12 +10,14 @@ import MentionsLegales from '@/pages/legal/MentionsLegales'
 import PolitiqueConfidentialite from '@/pages/legal/PolitiqueConfidentialite'
 import CGU from '@/pages/legal/CGU'
 import RequireAuth from '@/components/protected-route'
-import Footer from '@/components/landing/Footer'
+import Footer from '@/partials/Footer'
+import Navbar from '@/partials/Navbar'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Toaster />
+      <Navbar />
       <div className="min-h-screen flex flex-col bg-white">
         <div className="flex-1">
           <Routes>
