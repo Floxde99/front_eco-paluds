@@ -1,28 +1,113 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { loginUser, registerUser, getCurrentUser } from "@/services/Api"
 import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import LoginForm from "@/components/forms/LoginForm"
-import SignupForm from "@/components/forms/SignupForm"
+import { FormBuilder } from "@/components/forms/FormBuilder"
+
+const loginSchema = [
+  {
+    name: 'email',
+    label: 'Email',
+    type: 'email',
+    required: true,
+    placeholder: 'votre@email.com',
+  },
+  {
+    name: 'password',
+    label: 'Mot de passe',
+    type: 'password',
+    required: true,
+  },
+]
+
+const signupSchema = [
+  { name: 'company', label: "Nom de l'entreprise", placeholder: 'Votre entreprise' },
+  {
+    name: 'lastName',
+    label: 'Nom',
+    required: true,
+  },
+  {
+    name: 'firstName',
+    label: 'Prénom',
+    required: true,
+  },
+  {
+    name: 'email',
+    label: 'Email professionnel',
+    type: 'email',
+    required: true,
+    placeholder: 'contact@entreprise.com',
+  },
+  {
+    name: 'password',
+    label: 'Mot de passe',
+    type: 'password',
+    required: true,
+    helpText: 'Minimum 8 caractères',
+  },
+  {
+    name: 'confirmPassword',
+    label: 'Confirmer le mot de passe',
+    type: 'password',
+    required: true,
+  },
+  {
+    name: 'phone',
+    label: 'Téléphone',
+    type: 'tel',
+    placeholder: 'Votre numéro',
+  },
+]
+
+const validateLogin = (values) => {
+  const errors = {}
+  if (!values.email?.trim()) errors.email = "L'email est obligatoire"
+  if (!values.password) errors.password = 'Le mot de passe est obligatoire'
+  return errors
+}
+
+const validateSignup = (values) => {
+  const errors = {}
+  if (!values.lastName?.trim()) errors.lastName = 'Le nom est obligatoire'
+  if (!values.firstName?.trim()) errors.firstName = 'Le prénom est obligatoire'
+  if (!values.email?.trim()) errors.email = "L'email est obligatoire"
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) errors.email = 'Format d\'email invalide'
+  if (!values.password) errors.password = 'Le mot de passe est obligatoire'
+  else if (values.password.length < 8) errors.password = 'Le mot de passe doit contenir au moins 8 caractères'
+  if (!values.confirmPassword) errors.confirmPassword = 'La confirmation du mot de passe est obligatoire'
+  else if (values.password !== values.confirmPassword) errors.confirmPassword = 'Les mots de passe ne correspondent pas'
+  return errors
+}
 
 const Login = () => {
-  const [mode, setMode] = useState('login') // 'login' | 'signup'
+  const [mode, setMode] = useState('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
   const { updateUser } = useAuth()
   const [searchParams] = useSearchParams()
 
-  // État pour les erreurs de validation par champ
-  const [fieldErrors, setFieldErrors] = useState({})
+  const loginInitialValues = useMemo(() => ({ email: '', password: '' }), [])
+  const signupInitialValues = useMemo(
+    () => ({
+      firstName: '',
+      lastName: '',
+      company: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      phone: '',
+    }),
+    []
+  )
 
   // Reset les erreurs au changement de mode
   const handleModeChange = (newMode) => {
     setMode(newMode)
-    setError(null) // Reset les erreurs
-    setFieldErrors({}) // Reset les erreurs de champs
+    setError(null)
   }
 
   // Lire le query param ?mode=signup pour ouvrir directement le formulaire d'inscription
@@ -32,34 +117,7 @@ const Login = () => {
       setMode('signup')
     }
   }, [searchParams])
-  const [loginValues, setLoginValues] = useState({
-    email: "",
-    password: ""
-  })
-  
-  const [signupValues, setSignupValues] = useState({
-    firstName: "",
-    lastName: "",
-    company: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    phone: ""
-  })
-
-  // Fonctions helper pour gérer le succès et les erreurs
   const handleSignupSuccess = () => {
-    
-    setSignupValues({
-      firstName: "",
-      lastName: "",
-      company: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      phone: ""
-    })
-    
     // Toast de succès pour confirmation email
     toast.success(
       'Inscription réussie ! Vérifiez votre email pour confirmer votre compte avant de vous connecter.',
@@ -115,18 +173,11 @@ const Login = () => {
     toast.error(errorMessage, { duration: 5000 })
   }
 
-  const loginSubmit = async (e) => {
-    e.preventDefault()
+  const loginSubmit = async (values, helpers) => {
     setError(null)
-    
-    if (!loginValues.email || !loginValues.password) {
-      setError("Email et mot de passe requis")
-      return
-    }
-
     try {
       setLoading(true)
-      const data = await loginUser(loginValues)
+      const data = await loginUser(values)
       if (data?.accessToken) {
         localStorage.setItem('authToken', data.accessToken)
         
@@ -143,6 +194,7 @@ const Login = () => {
         }
         
         toast.success('Connexion réussie')
+        helpers.reset()
         navigate('/home')
       }
     } catch (err) {
@@ -152,8 +204,8 @@ const Login = () => {
       let errorMessage = 'Une erreur inattendue s\'est produite'
       
       if (err?.response?.status === 401) {
-        // Email non confirmé ou identifiants invalides
         errorMessage = 'Email ou mot de passe incorrect, ou compte non confirmé'
+        helpers.setErrors({ email: errorMessage, password: errorMessage })
       } else if (err?.response?.status === 403) {
         // Compte suspendu ou accès refusé
         errorMessage = 'Accès refusé. Votre compte pourrait être suspendu.'
@@ -177,72 +229,23 @@ const Login = () => {
     }
   }
 
-  const signupSubmit = async (e) => {
-    e.preventDefault()
+  const signupSubmit = async (values, helpers) => {
     setError(null)
-    setFieldErrors({}) // Reset les erreurs de champs
-
-    // Validation côté frontend avec marquage des champs
-    const errors = {}
-
-    if (!signupValues.firstName.trim()) {
-      errors.firstName = 'Le prénom est obligatoire'
-    }
-
-    if (!signupValues.lastName.trim()) {
-      errors.lastName = 'Le nom est obligatoire'
-    }
-
-    if (!signupValues.email.trim()) {
-      errors.email = 'L\'email est obligatoire'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupValues.email)) {
-      errors.email = 'Format d\'email invalide'
-    }
-
-    if (!signupValues.password) {
-      errors.password = 'Le mot de passe est obligatoire'
-    } else if (signupValues.password.length < 8) {
-      errors.password = 'Le mot de passe doit contenir au moins 8 caractères'
-    }
-
-    if (!signupValues.confirmPassword) {
-      errors.confirmPassword = 'La confirmation du mot de passe est obligatoire'
-    } else if (signupValues.password !== signupValues.confirmPassword) {
-      errors.confirmPassword = 'Les mots de passe ne correspondent pas'
-    }
-
-    // Si il y a des erreurs, les afficher et arrêter
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors)
-      setError('Veuillez corriger les erreurs ci-dessous')
-      return
-    }
-
     const payload = {
-      firstName: signupValues.firstName,
-      lastName: signupValues.lastName,
-      company: signupValues.company,
-      email: signupValues.email,
-      password: signupValues.password,
-      confirmPassword: signupValues.confirmPassword,
-      phone: signupValues.phone,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      company: values.company,
+      email: values.email,
+      password: values.password,
+      confirmPassword: values.confirmPassword,
+      phone: values.phone,
       role: 'user'
     }
 
     try {
       setLoading(true)
       await registerUser(payload)
-      
-      setSignupValues({
-        firstName: "",
-        lastName: "",
-        company: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        phone: ""
-      })
-      
+      helpers.reset()
       // Toast de succès pour confirmation email
       toast.success(
         'Inscription réussie ! Vérifiez votre email pour confirmer votre compte avant de vous connecter.',
@@ -269,6 +272,7 @@ const Login = () => {
         
         // Si le 409 contient des données qui ressemblent à une réponse de succès
         if (errorData?.user || errorData?.message?.includes('success') || errorData?.email) {
+          helpers.reset()
           handleSignupSuccess(errorData)
           return
         }
@@ -279,22 +283,6 @@ const Login = () => {
       
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleLoginInputChange = (field, value) => {
-    setLoginValues(prev => ({ ...prev, [field]: value }))
-    // Effacer l'erreur du champ quand l'utilisateur commence à taper
-    if (fieldErrors[field]) {
-      setFieldErrors(prev => ({ ...prev, [field]: undefined }))
-    }
-  }
-
-  const handleSignupInputChange = (field, value) => {
-    setSignupValues(prev => ({ ...prev, [field]: value }))
-    // Effacer l'erreur du champ quand l'utilisateur commence à taper
-    if (fieldErrors[field]) {
-      setFieldErrors(prev => ({ ...prev, [field]: undefined }))
     }
   }
 
@@ -312,22 +300,55 @@ const Login = () => {
           </CardHeader>
           <CardContent>
             {mode === 'login' ? (
-              <LoginForm
-                values={loginValues}
-                onInputChange={handleLoginInputChange}
+              <FormBuilder
+                key="login-form"
+                schema={loginSchema}
+                initialValues={loginInitialValues}
+                validate={validateLogin}
                 onSubmit={loginSubmit}
+                submitLabel="Se connecter"
                 loading={loading}
-                onSwitchToSignup={() => handleModeChange('signup')}
-                fieldErrors={fieldErrors}
+                footer={({ resetForm }) => (
+                  <div className="text-center text-sm text-muted-foreground">
+                    Pas encore de compte ?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetForm()
+                        handleModeChange('signup')
+                      }}
+                      className="underline text-blue-600 hover:text-blue-800"
+                    >
+                      Créer un compte
+                    </button>
+                  </div>
+                )}
               />
             ) : (
-              <SignupForm
-                values={signupValues}
-                onInputChange={handleSignupInputChange}
+              <FormBuilder
+                key="signup-form"
+                schema={signupSchema}
+                initialValues={signupInitialValues}
+                validate={validateSignup}
                 onSubmit={signupSubmit}
+                submitLabel="Créer mon compte"
+                submitVariant="success"
                 loading={loading}
-                onSwitchToLogin={() => handleModeChange('login')}
-                fieldErrors={fieldErrors}
+                footer={({ resetForm }) => (
+                  <div className="text-center text-sm text-muted-foreground">
+                    Déjà un compte ?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetForm()
+                        handleModeChange('login')
+                      }}
+                      className="underline text-blue-600 hover:text-blue-800"
+                    >
+                      Se connecter
+                    </button>
+                  </div>
+                )}
               />
             )}
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}

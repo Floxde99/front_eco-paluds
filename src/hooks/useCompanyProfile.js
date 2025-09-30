@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   getCompanyProfile,
+  createCompany,
   updateCompanyGeneral,
   getProductions,
   addProduction,
@@ -45,12 +46,68 @@ export function useCompanyProfile() {
         const data = await getCompanyProfile()
         return data
       } catch (error) {
+        // 404 means no company profile exists yet - this is normal for new users
+        if (error?.response?.status === 404) {
+          return null
+        }
         console.error('❌ Error fetching company profile:', error)
         throw error
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
+    retry: (failureCount, error) => {
+      // Don't retry 404 errors - no company profile exists
+      if (error?.response?.status === 404) {
+        return false
+      }
+      return failureCount < 2
+    },
+  })
+}
+
+/**
+ * Hook to create a new company profile
+ */
+export function useCreateCompany() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: createCompany,
+    onSuccess: (newCompany) => {
+      // Transform the response to match our expected format
+      const transformedData = {
+        general: {
+          nom_entreprise: newCompany.name,
+          secteur: newCompany.sector,
+          description: newCompany.description,
+          phone: newCompany.phone,
+          email: newCompany.email,
+          website: newCompany.website,
+          siret: newCompany.siret
+        },
+        productions: [],
+        besoins: [],
+        dechets: [],
+        geolocation: {
+          address: newCompany.address,
+          latitude: newCompany.latitude,
+          longitude: newCompany.longitude
+        }
+      }
+
+      // Set the new company data in cache
+      queryClient.setQueryData(companyKeys.profile(), transformedData)
+      
+      // Invalidate all company-related queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: companyKeys.all })
+      
+      toast.success('Entreprise créée avec succès!')
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.message || 'Erreur lors de la création de l\'entreprise'
+      toast.error(errorMessage)
+      console.error('❌ Error creating company:', error)
+    }
   })
 }
 
@@ -116,12 +173,21 @@ export function useProductions() {
         const data = await getProductions()
         return data
       } catch (error) {
+        // 404 means no productions exist yet - return empty array
+        if (error?.response?.status === 404) {
+          return []
+        }
         console.error('❌ Error fetching productions:', error)
         throw error
       }
     },
     staleTime: 3 * 60 * 1000, // 3 minutes
-    retry: 2,
+    retry: (failureCount, error) => {
+      if (error?.response?.status === 404) {
+        return false
+      }
+      return failureCount < 2
+    },
   })
 }
 
@@ -201,12 +267,21 @@ export function useBesoins() {
         const data = await getBesoins()
         return data
       } catch (error) {
+        // 404 means no besoins exist yet - return empty array
+        if (error?.response?.status === 404) {
+          return []
+        }
         console.error('❌ Error fetching besoins:', error)
         throw error
       }
     },
     staleTime: 3 * 60 * 1000, // 3 minutes
-    retry: 2,
+    retry: (failureCount, error) => {
+      if (error?.response?.status === 404) {
+        return false
+      }
+      return failureCount < 2
+    },
   })
 }
 
@@ -285,12 +360,21 @@ export function useDechets() {
         const data = await getDechets()
         return data
       } catch (error) {
+        // 404 means no dechets exist yet - return empty array
+        if (error?.response?.status === 404) {
+          return []
+        }
         console.error('❌ Error fetching dechets:', error)
         throw error
       }
     },
     staleTime: 3 * 60 * 1000, // 3 minutes
-    retry: 2,
+    retry: (failureCount, error) => {
+      if (error?.response?.status === 404) {
+        return false
+      }
+      return failureCount < 2
+    },
   })
 }
 
@@ -369,12 +453,21 @@ export function useGeolocation() {
         const data = await getGeolocation()
         return data
       } catch (error) {
+        // 404 means no geolocation data exists yet - return null
+        if (error?.response?.status === 404) {
+          return null
+        }
         console.error('❌ Error fetching geolocation:', error)
         throw error
       }
     },
     staleTime: 10 * 60 * 1000, // 10 minutes (geolocation changes less frequently)
-    retry: 2,
+    retry: (failureCount, error) => {
+      if (error?.response?.status === 404) {
+        return false
+      }
+      return failureCount < 2
+    },
   })
 }
 

@@ -10,24 +10,102 @@ import api from './Api.js'
 export async function getCompanyProfile() {
   try {
     const res = await api.get('/company/profile')
-    return res.data
+    const company = res.data.company
+    return {
+      general: {
+        nom_entreprise: company.name,
+        secteur: company.sector,
+        description: company.description,
+        phone: company.phone,
+        email: company.email,
+        website: company.website,
+        siret: company.siret
+      },
+      productions: company.productions || [],
+      besoins: company.besoins || [],
+      dechets: company.dechets || [],
+      geolocation: {
+        address: company.address,
+        latitude: company.latitude,
+        longitude: company.longitude
+      }
+    }
   } catch (err) {
+    if (err?.response?.status === 404) {
+      // Pas de profil encore : retourner null pour que le hook/composant gère l'état vide
+      return null
+    }
     console.error('❌ Error fetching company profile:', err)
     throw err
   }
 }
 
 /**
- * Update company general information
- * @param {Object} generalData - Object containing company general info
- * @param {string} generalData.nom_entreprise - Company name
- * @param {string} generalData.secteur - Business sector
- * @param {string} generalData.description - Company description
- * @returns {Promise} Updated company data
+ * Create a new company profile
+ * @param {Object} companyData - Company data with required and optional fields
+ * @param {string} companyData.name - Company name (required)
+ * @param {string} companyData.sector - Company sector (required)
+ * @param {string} companyData.address - Company address (required)
+ * @param {string} companyData.siret - Company SIRET (required)
+ * @param {number} companyData.latitude - Company latitude (required)
+ * @param {number} companyData.longitude - Company longitude (required)
+ * @param {string} companyData.phone - Company phone (required)
+ * @param {string} companyData.email - Company email (required)
+ * @param {string} [companyData.website] - Company website (optional)
+ * @param {string} [companyData.description] - Company description (optional)
+ * @returns {Promise} Created company data
  */
+export async function createCompany(companyData) {
+  try {
+    // Debug : Afficher les données avant envoi
+    console.log('📤 Frontend sending company data:', companyData)
+    
+    // Validation des champs requis
+    const requiredFields = ['name', 'sector', 'address', 'siret', 'phone', 'email', 'latitude', 'longitude']
+    const missingFields = requiredFields.filter(field => 
+      companyData[field] === undefined || companyData[field] === null || companyData[field] === ''
+    )
+    
+    if (missingFields.length > 0) {
+      console.error('❌ Missing required fields:', missingFields)
+      throw new Error(`Champs requis manquants: ${missingFields.join(', ')}`)
+    }
+    
+    // S'assurer que tous les champs requis sont présents et valides
+    const cleanedData = {
+      name: String(companyData.name).trim(),
+      sector: String(companyData.sector).trim(),
+      address: String(companyData.address).trim(),
+      siret: String(companyData.siret).trim(),
+      phone: String(companyData.phone).trim(),
+      email: String(companyData.email).trim(),
+      latitude: Number(companyData.latitude),
+      longitude: Number(companyData.longitude),
+      // Champs optionnels
+      ...(companyData.description && { description: String(companyData.description).trim() }),
+      ...(companyData.website && { website: String(companyData.website).trim() })
+    }
+    
+    console.log('📤 Cleaned data being sent:', cleanedData)
+    
+    const res = await api.post('/company', cleanedData)
+    return res.data.company
+  } catch (err) {
+    console.error('❌ Error creating company:', err)
+    throw err
+  }
+}
+
 export async function updateCompanyGeneral(generalData) {
   try {
-    const res = await api.put('/company/general', generalData)
+
+    const transformedData = {
+      name: generalData.nom_entreprise,
+      sector: generalData.secteur,
+      description: generalData.description
+    }
+    
+    const res = await api.put('/company/general', transformedData)
     return res.data
   } catch (err) {
     console.error('❌ Error updating company general info:', err)
@@ -46,8 +124,11 @@ export async function updateCompanyGeneral(generalData) {
 export async function getProductions() {
   try {
     const res = await api.get('/company/productions')
-    return res.data
+    return res.data.productions || []
   } catch (err) {
+    if (err?.response?.status === 404) {
+      return [] // pas encore de productions
+    }
     console.error('❌ Error fetching productions:', err)
     throw err
   }
@@ -58,13 +139,25 @@ export async function getProductions() {
  * @param {Object} productionData - Production item data
  * @param {string} productionData.name - Production name
  * @param {string} productionData.category - Production category
- * @param {string} productionData.quantity - Quantity information
+ * @param {string} productionData.quantity - Quantity information (maps to unit_measure)
+ * @param {string} productionData.description - Production description
+ * @param {string} productionData.status - Production status
  * @returns {Promise} Created production item
  */
 export async function addProduction(productionData) {
   try {
-    const res = await api.post('/company/productions', productionData)
-    return res.data
+    // Transform frontend field names to backend expected names
+    const transformedData = {
+      name: productionData.name,
+      category: productionData.category,
+      unit_measure: productionData.quantity || productionData.unit_measure,
+      description: productionData.description,
+      status: productionData.status || "active"
+    }
+    
+    const res = await api.post('/company/productions', transformedData)
+    // Backend returns: { message: "...", production: {...} }
+    return res.data.production
   } catch (err) {
     console.error('❌ Error adding production:', err)
     throw err
@@ -79,8 +172,18 @@ export async function addProduction(productionData) {
  */
 export async function updateProduction(id, productionData) {
   try {
-    const res = await api.put(`/company/productions/${id}`, productionData)
-    return res.data
+    // Transform frontend field names to backend expected names
+    const transformedData = {
+      name: productionData.name,
+      category: productionData.category,
+      unit_measure: productionData.quantity || productionData.unit_measure,
+      description: productionData.description,
+      status: productionData.status || "active"
+    }
+    
+    const res = await api.put(`/company/productions/${id}`, transformedData)
+    // Backend returns: { message: "...", production: {...} }
+    return res.data.production
   } catch (err) {
     console.error('❌ Error updating production:', err)
     throw err
@@ -113,8 +216,11 @@ export async function deleteProduction(id) {
 export async function getBesoins() {
   try {
     const res = await api.get('/company/besoins')
-    return res.data
+    return res.data.besoins || []
   } catch (err) {
+    if (err?.response?.status === 404) {
+      return [] // pas encore de besoins
+    }
     console.error('❌ Error fetching besoins:', err)
     throw err
   }
@@ -125,14 +231,25 @@ export async function getBesoins() {
  * @param {Object} besoinData - Besoin item data
  * @param {string} besoinData.name - Besoin name
  * @param {string} besoinData.category - Besoin category
- * @param {string} besoinData.quantity - Quantity needed
- * @param {string} besoinData.urgence - Urgency level
+ * @param {string} besoinData.quantity - Quantity needed (maps to unit_measure)
+ * @param {string} besoinData.description - Besoin description
+ * @param {string} besoinData.status - Besoin status
  * @returns {Promise} Created besoin item
  */
 export async function addBesoin(besoinData) {
   try {
-    const res = await api.post('/company/besoins', besoinData)
-    return res.data
+    // Transform frontend field names to backend expected names
+    const transformedData = {
+      name: besoinData.name,
+      category: besoinData.category,
+      unit_measure: besoinData.quantity || besoinData.unit_measure,
+      description: besoinData.description,
+      status: besoinData.status || "active"
+    }
+    
+    const res = await api.post('/company/besoins', transformedData)
+    // Backend returns: { message: "...", besoin: {...} }
+    return res.data.besoin
   } catch (err) {
     console.error('❌ Error adding besoin:', err)
     throw err
@@ -147,8 +264,18 @@ export async function addBesoin(besoinData) {
  */
 export async function updateBesoin(id, besoinData) {
   try {
-    const res = await api.put(`/company/besoins/${id}`, besoinData)
-    return res.data
+    // Transform frontend field names to backend expected names
+    const transformedData = {
+      name: besoinData.name,
+      category: besoinData.category,
+      unit_measure: besoinData.quantity || besoinData.unit_measure,
+      description: besoinData.description,
+      status: besoinData.status || "active"
+    }
+    
+    const res = await api.put(`/company/besoins/${id}`, transformedData)
+    // Backend returns: { message: "...", besoin: {...} }
+    return res.data.besoin
   } catch (err) {
     console.error('❌ Error updating besoin:', err)
     throw err
@@ -181,8 +308,11 @@ export async function deleteBesoin(id) {
 export async function getDechets() {
   try {
     const res = await api.get('/company/dechets')
-    return res.data
+    return res.data.dechets || []
   } catch (err) {
+    if (err?.response?.status === 404) {
+      return [] // pas encore de déchets
+    }
     console.error('❌ Error fetching dechets:', err)
     throw err
   }
@@ -193,15 +323,27 @@ export async function getDechets() {
  * @param {Object} dechetData - Dechet item data
  * @param {string} dechetData.name - Dechet name
  * @param {string} dechetData.category - Dechet category
- * @param {string} dechetData.quantity - Quantity available
- * @param {string} dechetData.etat - Current state/condition
- * @param {boolean} dechetData.traitement - Treatment required
+ * @param {string} dechetData.quantity - Quantity available (maps to unit_measure)
+ * @param {string} dechetData.description - Dechet description
+ * @param {boolean} dechetData.traitement - Treatment required (maps to is_been)
+ * @param {string} dechetData.status - Dechet status
  * @returns {Promise} Created dechet item
  */
 export async function addDechet(dechetData) {
   try {
-    const res = await api.post('/company/dechets', dechetData)
-    return res.data
+    // Transform frontend field names to backend expected names
+    const transformedData = {
+      name: dechetData.name,
+      category: dechetData.category,
+      unit_measure: dechetData.quantity || dechetData.unit_measure,
+      description: dechetData.description,
+      is_been: dechetData.traitement !== undefined ? dechetData.traitement : true,
+      status: dechetData.status || "active"
+    }
+    
+    const res = await api.post('/company/dechets', transformedData)
+    // Backend returns: { message: "...", dechet: {...} }
+    return res.data.dechet
   } catch (err) {
     console.error('❌ Error adding dechet:', err)
     throw err
@@ -216,8 +358,19 @@ export async function addDechet(dechetData) {
  */
 export async function updateDechet(id, dechetData) {
   try {
-    const res = await api.put(`/company/dechets/${id}`, dechetData)
-    return res.data
+    // Transform frontend field names to backend expected names
+    const transformedData = {
+      name: dechetData.name,
+      category: dechetData.category,
+      unit_measure: dechetData.quantity || dechetData.unit_measure,
+      description: dechetData.description,
+      is_been: dechetData.traitement !== undefined ? dechetData.traitement : true,
+      status: dechetData.status || "active"
+    }
+    
+    const res = await api.put(`/company/dechets/${id}`, transformedData)
+    // Backend returns: { message: "...", dechet: {...} }
+    return res.data.dechet
   } catch (err) {
     console.error('❌ Error updating dechet:', err)
     throw err
@@ -247,15 +400,22 @@ export async function deleteDechet(id) {
  * Update company geolocation data
  * @param {Object} geoData - Geolocation data
  * @param {string} geoData.address - Company address
- * @param {number} geoData.rayon - Action radius in km
  * @param {number} geoData.latitude - Latitude coordinate
  * @param {number} geoData.longitude - Longitude coordinate
  * @returns {Promise} Updated geolocation data
  */
 export async function updateGeolocation(geoData) {
   try {
-    const res = await api.put('/company/geolocation', geoData)
-    return res.data
+    // Backend expects: { address, latitude, longitude }
+    const transformedData = {
+      address: geoData.address,
+      latitude: geoData.latitude,
+      longitude: geoData.longitude
+    }
+    
+    const res = await api.put('/company/geolocation', transformedData)
+    // Backend returns: { message: "...", geolocation: {...} }
+    return res.data.geolocation
   } catch (err) {
     console.error('❌ Error updating geolocation:', err)
     throw err
@@ -269,8 +429,11 @@ export async function updateGeolocation(geoData) {
 export async function getGeolocation() {
   try {
     const res = await api.get('/company/geolocation')
-    return res.data
+    return res.data.geolocation || null
   } catch (err) {
+    if (err?.response?.status === 404) {
+      return null // pas encore de géolocalisation
+    }
     console.error('❌ Error fetching geolocation:', err)
     throw err
   }

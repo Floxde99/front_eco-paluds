@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* custom variant and theme directives removed — use standard CSS variables in globals.css */
 
 /* custom variant and theme directives commented out — using :root in globals.css for variables */

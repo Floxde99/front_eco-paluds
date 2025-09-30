@@ -145,6 +145,7 @@ export async function getUserCompanies() {
 }
 
 export * from './CompanyProfileApi.js'
+export * from './BillingApi.js'
 
 export default api;
 

@@ -11,7 +11,8 @@ export function FormInput({
   required = false,
   helpText,
   isInvalid = false,
-  errorMessage
+  errorMessage,
+  ...rest
 }) {
   return (
     <div>
@@ -24,6 +25,7 @@ export function FormInput({
         placeholder={placeholder}
         required={required}
         className={isInvalid ? "border-red-500 focus:ring-red-500/60" : ""}
+        {...rest}
       />
       {helpText && !isInvalid && <p className="text-xs text-muted-foreground mt-1">{helpText}</p>}
       {isInvalid && errorMessage && <p className="text-xs text-red-600 mt-1">{errorMessage}</p>}
