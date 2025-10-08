@@ -14,7 +14,7 @@ export function Benefits() {
   return (
     <section className="bg-white">
       <div className="mx-auto max-w-6xl px-6 py-14">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 mb-12">Pourquoi rejoindre EcoConnect ?</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 mb-12">Pourquoi rejoindre Ecopaluds ?</h2>
         <div className="flex items-start justify-center gap-4 md:gap-8 lg:gap-16">
           <BenefitCard icon="♻️" title="Réduisez vos coûts">
             Transformez vos déchets en revenus et réduisez vos coûts de traitement proximité

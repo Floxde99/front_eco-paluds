@@ -11,9 +11,17 @@ export const authKeys = {
 
 // Hook for current user with React Query
 export function useCurrentUser() {
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('authToken')
+
   return useQuery({
     queryKey: authKeys.user(),
-    queryFn: getCurrentUser,
+    enabled: hasToken,
+    queryFn: async () => {
+      if (!hasToken) {
+        return { user: null }
+      }
+      return getCurrentUser()
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       // Don't retry on auth errors (401, 403)

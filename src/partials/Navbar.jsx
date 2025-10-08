@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom'
 import { NavbarProvider } from '@/components/navigation/navbar-context'
 import { useNavbarController } from '@/components/navigation/useNavbarController'
 import { useNavbar } from '@/components/navigation/useNavbar'
@@ -8,9 +9,11 @@ import NavbarMobileMenu from '@/components/navigation/NavbarMobileMenu'
 
 function NavbarContent() {
   const { isAuthenticated } = useNavbar()
+  const location = useLocation()
+  const isPremiumPage = location.pathname === '/suggestions' || location.pathname === '/import-ia'
 
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className={isPremiumPage ? 'bg-[#FFC107] shadow-md border-b border-amber-400' : 'bg-white shadow-sm border-b'}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <NavbarBrand />

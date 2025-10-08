@@ -33,7 +33,9 @@ export function NavbarMobileContent() {
       <SheetHeader>
         <SheetTitle>Menu</SheetTitle>
         <SheetDescription>
-          {isAuthenticated ? `Bonjour ${user?.prenom} !` : 'Navigation du site EcoConnect Paluds'}
+                  <p className="text-sm text-muted-foreground">
+          {isAuthenticated ? `Bonjour ${user?.prenom} !` : 'Navigation du site Ecopaluds'}
+        </p>
         </SheetDescription>
       </SheetHeader>
       <div className="grid gap-4 py-4">

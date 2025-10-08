@@ -5,7 +5,7 @@ export function Testimonial() {
     <section className="bg-gray-50 border-t">
       <div className="mx-auto max-w-4xl px-6 py-16 text-center">
         <blockquote className="text-lg sm:text-xl text-gray-800">
-          « Grâce à EcoConnect, nous avons trouvé un partenaire pour valoriser nos chutes de métal.
+          « Grâce à Ecopaluds, nous avons trouvé un partenaire pour valoriser nos chutes de métal.
           Une économie de 15 000€ par an ! »
         </blockquote>
         <div className="mt-6">

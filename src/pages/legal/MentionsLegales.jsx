@@ -8,7 +8,7 @@ export default function MentionsLegales() {
         <div className="prose prose-slate max-w-none">
           <p>Ces mentions sont fournies à titre indicatif. Remplacez par vos informations légales réelles.</p>
           <h2>Éditeur du site</h2>
-          <p>EcoConnect Paluds — Raison sociale, adresse, contact, SIREN/SIRET.</p>
+          <p>Ecopaluds — Raison sociale, adresse, contact, SIREN/SIRET.</p>
           <h2>Hébergement</h2>
           <p>Nom de l’hébergeur, adresse, téléphone.</p>
           <h2>Contact</h2>

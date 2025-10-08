@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { logoutUser } from '@/services/Api'
-import { Building2, Crown, Home, User, Settings } from 'lucide-react'
+import { Building2, Crown, Home, User, Settings, Sparkles, Upload } from 'lucide-react'
 
 export function useNavbarController() {
   const navigate = useNavigate()
@@ -13,9 +13,11 @@ export function useNavbarController() {
   const navigationItems = useMemo(
     () => [
       { title: 'Accueil', href: '/', icon: Home },
-  { title: 'Dashboard', href: '/home', icon: User, protected: true },
+      { title: 'Dashboard', href: '/home', icon: User, protected: true },
       { title: 'Annuaire', href: '/annuaire', icon: Building2, protected: true },
-  { title: 'Abonnement', href: '/abonnement', icon: Crown, protected: true },
+      { title: 'Suggestions', href: '/suggestions', icon: Sparkles, protected: true },
+      { title: 'Import IA', href: '/import-ia', icon: Upload, protected: true },
+      { title: 'Abonnement', href: '/abonnement', icon: Crown, protected: true },
     ],
     []
   )

@@ -20,6 +20,16 @@ export function useAvatar() {
 
     // Essayer de récupérer l'avatar seulement si l'utilisateur est connecté
     isFetchingRef.current = true
+    
+    // Si le profil n'a pas encore d'avatar côté API, ne pas déclencher d'appel 404
+    if (!user?.avatar_url) {
+      setAvatarBlobUrl(null)
+      setAvatarFetched(true)
+      setAvatarLoading(false)
+      isFetchingRef.current = false
+      return
+    }
+
     setAvatarFetched(true)
     setAvatarLoading(true)
     

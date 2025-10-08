@@ -240,7 +240,7 @@ function PageHeader() {
         <span>Premium</span>
       </div>
       <div className="space-y-3">
-        <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">Passez à EcoConnect Premium</h1>
+        <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">Passez à Ecopaluds Premium</h1>
         <p className="mx-auto max-w-2xl text-sm text-slate-600 md:text-base">
           Débloquez toutes les fonctionnalités pour maximiser vos opportunités d'affaires et propulser votre entreprise.
         </p>
@@ -382,7 +382,7 @@ function OrderSummaryCard() {
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-slate-900">Récapitulatif de commande</h3>
           <div className="flex items-center justify-between text-sm text-slate-500">
-            <span>EcoConnect {selectedPlan.name}</span>
+            <span>Ecopaluds {selectedPlan.name}</span>
             <span className="font-semibold text-slate-900">{selectedPlan.priceLabel}</span>
           </div>
         </div>

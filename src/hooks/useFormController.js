@@ -8,18 +8,22 @@ const createInitialValues = (schema, provided = {}) => {
   }, {})
 }
 
-export function useFormController({ schema, initialValues = {}, validate, externalErrors }) {
+export function useFormController({ schema, initialValues, validate, externalErrors }) {
   const computedInitialValues = useMemo(
-    () => createInitialValues(schema, initialValues),
+    () => createInitialValues(schema, initialValues ?? {}),
     [schema, initialValues]
   )
 
-  const [values, setValues] = useState(computedInitialValues)
+  const [values, setValues] = useState(() => computedInitialValues)
   const [errors, setErrors] = useState({})
 
+  // Don't reset values when schema changes - only when initialValues explicitly changes
+  // This prevents form values from being wiped when the schema is recreated
   useEffect(() => {
-    setValues(computedInitialValues)
-  }, [computedInitialValues])
+    if (initialValues) {
+      setValues(createInitialValues(schema, initialValues))
+    }
+  }, [initialValues, schema])
 
   useEffect(() => {
     if (externalErrors) {
@@ -81,6 +85,7 @@ export function useFormController({ schema, initialValues = {}, validate, extern
     fields: fieldStates,
     setFieldValue,
     setErrors,
+    setFieldError,
     handleSubmit,
     resetForm,
   }

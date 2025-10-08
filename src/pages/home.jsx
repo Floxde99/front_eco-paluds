@@ -39,7 +39,7 @@ export default function Home() {
 					<h2 className="text-3xl font-bold text-gray-900 mb-2">
 						{getGreeting()} {getFirstName()} !
 					</h2>
-					<p className="text-gray-600">Voici un aperçu de votre activité sur EcoConnect</p>
+					<p className="text-gray-600">Voici un aperçu de votre activité sur Ecopaluds</p>
 				</div>
 
 				<div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">

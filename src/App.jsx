@@ -9,6 +9,8 @@ import ConfirmEmail from '@/pages/ConfirmEmail'
 import CompanyProfile from '@/pages/CompanyProfile'
 import DirectoryPage from '@/pages/directory'
 import SubscriptionPage from '@/pages/subscription'
+import SuggestionsPage from '@/pages/suggestions'
+import ImportPage from '@/pages/import'
 import MentionsLegales from '@/pages/legal/MentionsLegales'
 import PolitiqueConfidentialite from '@/pages/legal/PolitiqueConfidentialite'
 import CGU from '@/pages/legal/CGU'
@@ -30,6 +32,8 @@ export default function App() {
             <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
             <Route path="/annuaire" element={<RequireAuth><DirectoryPage /></RequireAuth>} />
             <Route path="/profile" element={<RequireAuth><CompanyProfile /></RequireAuth>} />
+            <Route path="/suggestions" element={<RequireAuth><SuggestionsPage /></RequireAuth>} />
+            <Route path="/import-ia" element={<RequireAuth><ImportPage /></RequireAuth>} />
             <Route path="/abonnement" element={<RequireAuth><SubscriptionPage /></RequireAuth>} />
             <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />

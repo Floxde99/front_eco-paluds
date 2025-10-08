@@ -4,7 +4,7 @@ import ResourceItemCard from './ResourceItemCard'
 
 export function ResourceSection({
   title,
-  icon: Icon,
+  icon,
   items = [],
   type,
   onAdd,
@@ -15,6 +15,7 @@ export function ResourceSection({
   emptyState,
 }) {
   const hasItems = items.length > 0
+  const IconComponent = icon
   const EmptyIcon = emptyState?.icon
   const buttonLabel = emptyState?.actionLabel ?? addLabel
   const addButton = (
@@ -31,7 +32,7 @@ export function ResourceSection({
     <section>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
-          <Icon className="h-5 w-5" />
+          {IconComponent && <IconComponent className="h-5 w-5" />}
           <span>{title}</span>
         </h2>
         {addButton}
