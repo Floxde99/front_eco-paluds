@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Upload, Download, FileSpreadsheet, Eye, CheckCircle2, TrendingUp, Users, DollarSign, Sparkles, Clock, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -138,6 +139,7 @@ function normalizeMappingResponse(response) {
 }
 
 export default function ImportPage() {
+  const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(1)
   const [uploadedFileId, setUploadedFileId] = useState(null)
   const [analysisId, setAnalysisId] = useState(null)
@@ -299,7 +301,7 @@ export default function ImportPage() {
           )}
 
           <ImportHistorySection history={history} />
-          <PremiumFeaturesSection />
+          <PremiumFeaturesSection onContactAI={() => navigate('/assistant')} />
         </div>
       </div>
     </div>
@@ -1040,7 +1042,7 @@ function ImportHistorySection({ history }) {
 // ===================
 // PREMIUM FEATURES
 // ===================
-function PremiumFeaturesSection() {
+function PremiumFeaturesSection({ onContactAI }) {
   const features = [
     {
       icon: <Sparkles className="h-5 w-5" />,
@@ -1106,15 +1108,19 @@ function PremiumFeaturesSection() {
         <div className="mt-6 rounded-lg bg-blue-600 p-6 text-center text-white">
           <p className="mb-2 text-sm font-medium">Besoin d'aide avec l'import ?</p>
           <p className="mb-4 text-xs">
-            Notre équipe technique est là pour vous accompagner
+            Discutez d'abord avec notre assistant IA dédié ; l'équipe support intervient seulement si nécessaire.
           </p>
           <div className="flex justify-center gap-4">
-            <Button variant="outline" className="border-white bg-transparent text-white hover:bg-white hover:text-blue-600">
+            <Button
+              onClick={() => onContactAI?.()}
+              variant="outline"
+              className="border-white bg-transparent text-white hover:bg-white hover:text-blue-600"
+            >
               <Clock className="mr-2 h-4 w-4" />
-              Envoyer un message
+              Contacter l'assistant IA
             </Button>
             <Button variant="outline" className="border-white bg-white text-blue-600 hover:bg-slate-50">
-              SUPPORT PREMIUM 24/7
+              Support humain (dernier recours)
             </Button>
           </div>
         </div>

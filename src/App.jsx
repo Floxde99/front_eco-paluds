@@ -11,6 +11,7 @@ import DirectoryPage from '@/pages/directory'
 import SubscriptionPage from '@/pages/subscription'
 import SuggestionsPage from '@/pages/suggestions'
 import ImportPage from '@/pages/import'
+import AssistantSupportPage from '@/pages/assistant'
 import MentionsLegales from '@/pages/legal/MentionsLegales'
 import PolitiqueConfidentialite from '@/pages/legal/PolitiqueConfidentialite'
 import CGU from '@/pages/legal/CGU'
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/profile" element={<RequireAuth><CompanyProfile /></RequireAuth>} />
             <Route path="/suggestions" element={<RequireAuth><SuggestionsPage /></RequireAuth>} />
             <Route path="/import-ia" element={<RequireAuth><ImportPage /></RequireAuth>} />
+            <Route path="/assistant" element={<RequireAuth><AssistantSupportPage /></RequireAuth>} />
             <Route path="/abonnement" element={<RequireAuth><SubscriptionPage /></RequireAuth>} />
             <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
