@@ -3,14 +3,14 @@ import { useNavbar } from './useNavbar'
 import NavbarMobileTrigger from './NavbarMobileTrigger'
 import NavbarMobileContent from './NavbarMobileContent'
 
-export function NavbarMobileMenu() {
+export function NavbarMobileMenu({ textClassName = 'text-gray-900' }) {
   const { isMobileOpen, toggleMobile } = useNavbar()
 
   return (
     <div className="md:hidden">
       <Sheet open={isMobileOpen} onOpenChange={toggleMobile}>
-        <NavbarMobileTrigger />
-        <NavbarMobileContent />
+        <NavbarMobileTrigger textClassName={textClassName} />
+        <NavbarMobileContent textClassName={textClassName} />
       </Sheet>
     </div>
   )

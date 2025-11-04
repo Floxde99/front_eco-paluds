@@ -11,14 +11,25 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { useNavbar } from './useNavbar'
+import clsx from 'clsx'
 
-export function NavbarUserMenu() {
+export function NavbarUserMenu({ textClassName = 'text-gray-700' }) {
   const { user, userMenuItems, handleLogout } = useNavbar()
+  const buttonVariant =
+    textClassName === 'text-white'
+      ? 'text-white hover:bg-white/20'
+      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button
+          variant="ghost"
+          className={clsx(
+            'relative h-10 w-10 rounded-full',
+            buttonVariant
+          )}
+        >
           <Avatar size="md" className="h-10 w-10" />
         </Button>
       </DropdownMenuTrigger>
@@ -26,7 +37,7 @@ export function NavbarUserMenu() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user?.prenom} {user?.nom}
+              {[user?.firstName ?? user?.prenom, user?.lastName ?? user?.nom].filter(Boolean).join(' ') || user?.email || 'Utilisateur'}
             </p>
             <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
           </div>

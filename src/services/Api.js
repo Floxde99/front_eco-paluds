@@ -144,9 +144,28 @@ export async function getUserCompanies() {
 	return res.data
 }
 
+export async function getCompanyPublicProfile(companyId) {
+	if (!companyId) {
+		throw new Error('companyId requis')
+	}
+	const res = await api.get(`/companies/${companyId}`)
+	const payload = res.data
+	if (payload && typeof payload === 'object') {
+		if ('data' in payload && payload.data) {
+			return payload.data
+		}
+		if ('company' in payload && payload.company) {
+			return payload.company
+		}
+	}
+	return payload
+}
+
 export * from './CompanyProfileApi.js'
 export * from './BillingApi.js'
 export * from './AssistantApi.js'
+export * from './CompanyMessagesApi.js'
+export * from './AdminApi.js'
 
 export default api;
 

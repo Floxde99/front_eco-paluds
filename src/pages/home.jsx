@@ -68,33 +68,37 @@ export default function Home() {
 							</Card>
 						</Link>
 
-						<Card className="cursor-pointer hover:shadow-md transition-shadow">
-							<CardContent className="p-6">
-								<div className="flex items-start space-x-4">
-									<div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-										<div className="w-6 h-6 text-green-600">🔍</div>
+						<Link to="/annuaire">
+							<Card className="cursor-pointer hover:shadow-md transition-shadow">
+								<CardContent className="p-6">
+									<div className="flex items-start space-x-4">
+										<div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+											<div className="w-6 h-6 text-green-600">🔍</div>
+										</div>
+										<div className="flex-1">
+											<h4 className="font-semibold text-gray-900 mb-1">Rechercher des partenaires</h4>
+											<p className="text-sm text-gray-600">Explorer l'annuaire et la carte</p>
+										</div>
 									</div>
-									<div className="flex-1">
-										<h4 className="font-semibold text-gray-900 mb-1">Rechercher des partenaires</h4>
-										<p className="text-sm text-gray-600">Explorer l'annuaire et la carte</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
+								</CardContent>
+							</Card>
+						</Link>
 
-						<Card className="cursor-pointer hover:shadow-md transition-shadow">
-							<CardContent className="p-6">
-								<div className="flex items-start space-x-4">
-									<div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-										<div className="w-6 h-6 text-orange-600">🗺️</div>
+						<Link to="/annuaire?view=map">
+							<Card className="cursor-pointer hover:shadow-md transition-shadow">
+								<CardContent className="p-6">
+									<div className="flex items-start space-x-4">
+										<div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+											<div className="w-6 h-6 text-orange-600">🗺️</div>
+										</div>
+										<div className="flex-1">
+											<h4 className="font-semibold text-gray-900 mb-1">Carte interactive</h4>
+											<p className="text-sm text-gray-600">Visualiser les entreprises proches</p>
+										</div>
 									</div>
-									<div className="flex-1">
-										<h4 className="font-semibold text-gray-900 mb-1">Carte interactive</h4>
-										<p className="text-sm text-gray-600">Visualiser les entreprises proches</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
+								</CardContent>
+							</Card>
+						</Link>
 					</div>
 				</div>
 			</main>

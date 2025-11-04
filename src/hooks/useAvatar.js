@@ -11,19 +11,33 @@ export function useAvatar() {
   const fetchAvatarRef = useRef(null)
   const isFetchingRef = useRef(false)
 
-  // Fonction pour récupérer l'avatar
+  const updateBlobUrl = useCallback((nextUrl) => {
+    setAvatarBlobUrl((previousUrl) => {
+      if (
+        previousUrl &&
+        previousUrl !== nextUrl &&
+        typeof URL !== 'undefined' &&
+        typeof URL.revokeObjectURL === 'function'
+      ) {
+        URL.revokeObjectURL(previousUrl)
+      }
+      return nextUrl ?? null
+    })
+  }, [])
+
+  // Fonction pour r�cup�rer l'avatar
   const fetchAvatar = useCallback(async () => {
-    // Éviter les appels répétés ou parallèles
+    // �viter les appels r�p�t�s ou parall�les
     if (avatarFetched || isFetchingRef.current || !user) {
       return
     }
 
-    // Essayer de récupérer l'avatar seulement si l'utilisateur est connecté
+    // Essayer de r�cup�rer l'avatar seulement si l'utilisateur est connect�
     isFetchingRef.current = true
-    
-    // Si le profil n'a pas encore d'avatar côté API, ne pas déclencher d'appel 404
+
+    // Si le profil n'a pas encore d'avatar c�t� API, ne pas d�clencher d'appel 404
     if (!user?.avatar_url) {
-      setAvatarBlobUrl(null)
+      updateBlobUrl(null)
       setAvatarFetched(true)
       setAvatarLoading(false)
       isFetchingRef.current = false
@@ -32,35 +46,35 @@ export function useAvatar() {
 
     setAvatarFetched(true)
     setAvatarLoading(true)
-    
+
     try {
       const blob = await getAvatar()
       const blobUrl = URL.createObjectURL(blob)
-      setAvatarBlobUrl(blobUrl)
+      updateBlobUrl(blobUrl)
     } catch {
-      setAvatarBlobUrl(null)
+      updateBlobUrl(null)
     } finally {
       setAvatarLoading(false)
       isFetchingRef.current = false
     }
-  }, [user, avatarFetched])
+  }, [user, avatarFetched, updateBlobUrl])
 
   // Stocker la fonction dans le ref
   useEffect(() => {
     fetchAvatarRef.current = fetchAvatar
   }, [fetchAvatar])
 
-  // Gérer les changements d'utilisateur
+  // G�rer les changements d'utilisateur
   useEffect(() => {
     if (user?.id !== previousUserId) {
       setPreviousUserId(user?.id)
-      // Reset tous les états quand l'utilisateur change
+      // Reset tous les �tats quand l'utilisateur change
       setAvatarFetched(false)
-      setAvatarBlobUrl(null)
+      updateBlobUrl(null)
       setAvatarLoading(false)
       isFetchingRef.current = false
     }
-  }, [user?.id, previousUserId])
+  }, [user?.id, previousUserId, updateBlobUrl])
 
   // Charger l'avatar automatiquement
   useEffect(() => {
@@ -72,7 +86,11 @@ export function useAvatar() {
   // Cleanup
   useEffect(() => {
     return () => {
-      if (avatarBlobUrl) {
+      if (
+        avatarBlobUrl &&
+        typeof URL !== 'undefined' &&
+        typeof URL.revokeObjectURL === 'function'
+      ) {
         URL.revokeObjectURL(avatarBlobUrl)
       }
     }
@@ -101,7 +119,7 @@ export function useAvatar() {
     getDisplayName,
     refetchAvatar: () => {
       setAvatarFetched(false)
-      setAvatarBlobUrl(null)
+      updateBlobUrl(null)
     }
   }
 }

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import CompanyCreateForm from '@/components/forms/CompanyCreateForm'
 import { Button } from '@/components/ui/button'
 import { Plus, Package, Recycle, Search } from 'lucide-react'
@@ -10,11 +11,14 @@ import { ProfileLoadingSkeleton } from '@/components/company-profile/ProfileLoad
 import { ResourceDialog } from '@/components/company-profile/ResourceDialog'
 import { useCompanyProfilePage } from '@/hooks/useCompanyProfilePage'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { toast } from 'sonner'
 
 export default function CompanyProfile() {
+  const navigate = useNavigate()
   const {
     loading,
     hasProfile,
+    profileData,
     productions,
     besoins,
     dechets,
@@ -81,6 +85,46 @@ export default function CompanyProfile() {
     }
   }, [isEditingGeneral, resetGeneralInfo, toggleGeneralEditing])
 
+  const companyId = profileData?.id
+
+  const handleOpenPublicPreview = useCallback(() => {
+    if (!companyId) {
+      toast.error("Impossible d'ouvrir le profil public pour le moment.")
+      return
+    }
+
+    const general = profileData?.general ?? {}
+    const [latitude, longitude] = Array.isArray(coordinates)
+      ? coordinates
+      : [undefined, undefined]
+
+    const previewCompany = {
+      id: companyId,
+      name: general.nom_entreprise ?? general.name ?? 'Entreprise',
+      description: general.description ?? '',
+      sector: general.secteur ?? general.sector ?? null,
+      phone: general.phone ?? null,
+      email: general.email ?? null,
+      website: general.website ?? null,
+      address,
+      latitude,
+      longitude,
+      productions,
+      besoins,
+      dechets,
+    }
+
+    navigate(
+      {
+  pathname: `/companies/${companyId}`,
+        search: '?preview=1',
+      },
+      previewCompany
+        ? { state: { previewCompany } }
+        : undefined
+    )
+  }, [address, besoins, companyId, coordinates, dechets, navigate, productions, profileData])
+
   if (loading) {
     return <ProfileLoadingSkeleton />
   }
@@ -111,7 +155,14 @@ export default function CompanyProfile() {
           <p className="text-gray-600">Complétez votre profil pour maximiser vos opportunités</p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline">Aperçu public</Button>
+          <Button
+            variant="outline"
+            onClick={handleOpenPublicPreview}
+            disabled={!profileData?.id}
+            title={!profileData?.id ? "Profil public indisponible" : undefined}
+          >
+            Aperçu public
+          </Button>
           <Button className="bg-green-600 hover:bg-green-700">Enregistrer</Button>
         </div>
       </div>

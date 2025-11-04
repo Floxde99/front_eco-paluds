@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Building2, Heart, List, Loader2, Map as MapIcon, Search, SlidersHorizontal } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import InteractiveMap from '@/components/Map'
 import api from '@/services/Api'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const DEFAULT_MAX_DISTANCE = 15
 const DEFAULT_PAGE_SIZE = 12
@@ -28,7 +29,7 @@ function Tag({ label }) {
   )
 }
 
-function DirectoryCard({ company }) {
+function DirectoryCard({ company, onOpenProfile }) {
   const distanceValue = typeof company.distance === 'number'
     ? company.distance.toFixed(1)
     : company.distance
@@ -36,7 +37,18 @@ function DirectoryCard({ company }) {
   const tags = Array.isArray(company.tags) ? company.tags : []
 
   return (
-    <Card className="border border-slate-200 shadow-sm">
+    <Card
+      className="border border-slate-200 shadow-sm transition hover:border-blue-200 hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400"
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpenProfile?.(company)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onOpenProfile?.(company)
+        }
+      }}
+    >
       <CardContent className="p-6 space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -47,7 +59,17 @@ function DirectoryCard({ company }) {
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">
               {distanceValue} km
             </span>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Contacter</Button>
+            <Button
+              type="button"
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={(event) => {
+                event.stopPropagation()
+                // TODO: branch to contact flow when API ready
+              }}
+            >
+              Contacter
+            </Button>
           </div>
         </div>
 
@@ -71,6 +93,7 @@ function DirectoryCard({ company }) {
             type="button"
             className="rounded-full p-1 text-slate-300 transition hover:bg-slate-100 hover:text-slate-500"
             aria-label="Ajouter aux favoris"
+            onClick={(event) => event.stopPropagation()}
           >
             <Heart className="h-4 w-4" />
           </button>
@@ -81,11 +104,23 @@ function DirectoryCard({ company }) {
 }
 
 export default function DirectoryPage() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedSectors, setSelectedSectors] = useState(new Set())
-  const [selectedWasteTypes, setSelectedWasteTypes] = useState(new Set())
-  const [maxDistance, setMaxDistance] = useState(DEFAULT_MAX_DISTANCE)
-  const [viewMode, setViewMode] = useState('list')
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [pendingSearchTerm, setPendingSearchTerm] = useState('')
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState('')
+  const [pendingSectors, setPendingSectors] = useState(new Set())
+  const [appliedSectors, setAppliedSectors] = useState(new Set())
+  const [pendingWasteTypes, setPendingWasteTypes] = useState(new Set())
+  const [appliedWasteTypes, setAppliedWasteTypes] = useState(new Set())
+  const [pendingMaxDistance, setPendingMaxDistance] = useState(DEFAULT_MAX_DISTANCE)
+  const [appliedMaxDistance, setAppliedMaxDistance] = useState(DEFAULT_MAX_DISTANCE)
+  const getViewFromSearch = useCallback(() => {
+    const params = new URLSearchParams(location.search)
+    const view = params.get('view')
+    return view === 'map' ? 'map' : 'list'
+  }, [location.search])
+
+  const [viewMode, setViewMode] = useState(() => getViewFromSearch())
   const [page, setPage] = useState(1)
   const [sectorsDirty, setSectorsDirty] = useState(false)
   const [wastesDirty, setWastesDirty] = useState(false)
@@ -94,7 +129,7 @@ export default function DirectoryPage() {
   const sectorsTouchedRef = useRef(false)
   const wastesTouchedRef = useRef(false)
 
-  const toggleSelection = (value, setState, touchedRef, defaultValuesRef, setDirty) => {
+  const toggleSelection = (value, setState, touchedRef) => {
     if (touchedRef?.current === false) {
       touchedRef.current = true
     }
@@ -105,20 +140,13 @@ export default function DirectoryPage() {
       } else {
         next.add(value)
       }
-      if (defaultValuesRef?.current instanceof Set && typeof setDirty === 'function') {
-        const isDirty = !areSetsEqual(next, defaultValuesRef.current)
-        setDirty(isDirty)
-      } else if (typeof setDirty === 'function') {
-        setDirty(true)
-      }
       return next
     })
-    setPage(1)
   }
 
   const directoryQueryParams = useMemo(() => {
-    const sectorsArray = Array.from(selectedSectors)
-    const wasteArray = Array.from(selectedWasteTypes)
+    const sectorsArray = Array.from(appliedSectors)
+    const wasteArray = Array.from(appliedWasteTypes)
 
     const sectorsParam =
       sectorsDirty && sectorsArray.length ? [...sectorsArray].sort().join(',') : undefined
@@ -126,14 +154,14 @@ export default function DirectoryPage() {
       wastesDirty && wasteArray.length ? [...wasteArray].sort().join(',') : undefined
 
     return {
-      search: searchTerm.trim(),
+      search: appliedSearchTerm.trim(),
       sectors: sectorsParam,
       wasteTypes: wastesParam,
-      maxDistance,
+      maxDistance: appliedMaxDistance,
       page,
       limit: DEFAULT_PAGE_SIZE,
     }
-  }, [searchTerm, selectedSectors, selectedWasteTypes, maxDistance, page, sectorsDirty, wastesDirty])
+  }, [appliedSearchTerm, appliedSectors, appliedWasteTypes, appliedMaxDistance, page, sectorsDirty, wastesDirty])
 
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['directory', directoryQueryParams],
@@ -159,12 +187,20 @@ export default function DirectoryPage() {
   useEffect(() => {
     const optionValues = sectorOptions.map((option) => option.value)
     const defaultSet = new Set(optionValues)
-    defaultSectorValuesRef.current = defaultSet
+
+    if (!sectorsTouchedRef.current) {
+      defaultSectorValuesRef.current = defaultSet
+    }
 
     if (!optionValues.length) {
       sectorsTouchedRef.current = false
-      if (selectedSectors.size) {
-        setSelectedSectors(new Set())
+      defaultSectorValuesRef.current = defaultSet
+      if (pendingSectors.size) {
+        setPendingSectors(new Set())
+      }
+      if (appliedSectors.size) {
+        setAppliedSectors(new Set())
+        setPage(1)
       }
       if (sectorsDirty) {
         setSectorsDirty(false)
@@ -172,30 +208,69 @@ export default function DirectoryPage() {
       return
     }
 
-    const nextSet = sectorsTouchedRef.current
-      ? new Set([...selectedSectors].filter((value) => defaultSet.has(value)))
-      : defaultSet
+    const sanitizeSelection = (selection) =>
+      new Set([...selection].filter((value) => defaultSet.has(value)))
 
-    const dirty = sectorsTouchedRef.current && !areSetsEqual(nextSet, defaultSet)
+    let nextPending = pendingSectors
+    let nextApplied = appliedSectors
+    let pendingChanged = false
+    let appliedChanged = false
 
-    if (!areSetsEqual(selectedSectors, nextSet)) {
-      setSelectedSectors(nextSet)
+    if (!sectorsTouchedRef.current) {
+      if (!areSetsEqual(pendingSectors, defaultSet)) {
+        nextPending = defaultSet
+        pendingChanged = true
+      }
+      if (!areSetsEqual(appliedSectors, defaultSet)) {
+        nextApplied = defaultSet
+        appliedChanged = true
+      }
+    } else {
+      const sanitizedPending = sanitizeSelection(pendingSectors)
+      if (!areSetsEqual(pendingSectors, sanitizedPending)) {
+        nextPending = sanitizedPending
+        pendingChanged = true
+      }
     }
 
+    const sanitizedApplied = sanitizeSelection(nextApplied)
+    if (!areSetsEqual(nextApplied, sanitizedApplied)) {
+      nextApplied = sanitizedApplied
+      appliedChanged = true
+    }
+
+    const baseline = defaultSectorValuesRef.current ?? defaultSet
+    const dirty = !areSetsEqual(nextApplied, baseline)
+
+    if (pendingChanged) {
+      setPendingSectors(nextPending)
+    }
+    if (appliedChanged) {
+      setAppliedSectors(nextApplied)
+      setPage(1)
+    }
     if (sectorsDirty !== dirty) {
       setSectorsDirty(dirty)
     }
-  }, [sectorOptions, selectedSectors, sectorsDirty])
+  }, [sectorOptions, pendingSectors, appliedSectors, sectorsDirty])
 
   useEffect(() => {
     const optionValues = wasteOptions.map((option) => option.value)
     const defaultSet = new Set(optionValues)
-    defaultWasteValuesRef.current = defaultSet
+
+    if (!wastesTouchedRef.current) {
+      defaultWasteValuesRef.current = defaultSet
+    }
 
     if (!optionValues.length) {
       wastesTouchedRef.current = false
-      if (selectedWasteTypes.size) {
-        setSelectedWasteTypes(new Set())
+      defaultWasteValuesRef.current = defaultSet
+      if (pendingWasteTypes.size) {
+        setPendingWasteTypes(new Set())
+      }
+      if (appliedWasteTypes.size) {
+        setAppliedWasteTypes(new Set())
+        setPage(1)
       }
       if (wastesDirty) {
         setWastesDirty(false)
@@ -203,24 +278,70 @@ export default function DirectoryPage() {
       return
     }
 
-    const nextSet = wastesTouchedRef.current
-      ? new Set([...selectedWasteTypes].filter((value) => defaultSet.has(value)))
-      : defaultSet
+    const sanitizeSelection = (selection) =>
+      new Set([...selection].filter((value) => defaultSet.has(value)))
 
-    const dirty = wastesTouchedRef.current && !areSetsEqual(nextSet, defaultSet)
+    let nextPending = pendingWasteTypes
+    let nextApplied = appliedWasteTypes
+    let pendingChanged = false
+    let appliedChanged = false
 
-    if (!areSetsEqual(selectedWasteTypes, nextSet)) {
-      setSelectedWasteTypes(nextSet)
+    if (!wastesTouchedRef.current) {
+      if (!areSetsEqual(pendingWasteTypes, defaultSet)) {
+        nextPending = defaultSet
+        pendingChanged = true
+      }
+      if (!areSetsEqual(appliedWasteTypes, defaultSet)) {
+        nextApplied = defaultSet
+        appliedChanged = true
+      }
+    } else {
+      const sanitizedPending = sanitizeSelection(pendingWasteTypes)
+      if (!areSetsEqual(pendingWasteTypes, sanitizedPending)) {
+        nextPending = sanitizedPending
+        pendingChanged = true
+      }
     }
 
+    const sanitizedApplied = sanitizeSelection(nextApplied)
+    if (!areSetsEqual(nextApplied, sanitizedApplied)) {
+      nextApplied = sanitizedApplied
+      appliedChanged = true
+    }
+
+    const baseline = defaultWasteValuesRef.current ?? defaultSet
+    const dirty = !areSetsEqual(nextApplied, baseline)
+
+    if (pendingChanged) {
+      setPendingWasteTypes(nextPending)
+    }
+    if (appliedChanged) {
+      setAppliedWasteTypes(nextApplied)
+      setPage(1)
+    }
     if (wastesDirty !== dirty) {
       setWastesDirty(dirty)
     }
-  }, [wasteOptions, selectedWasteTypes, wastesDirty])
+  }, [wasteOptions, pendingWasteTypes, appliedWasteTypes, wastesDirty])
 
   useEffect(() => {
-    setPage(1)
-  }, [searchTerm, maxDistance])
+    const currentView = getViewFromSearch()
+    if (currentView !== viewMode) {
+      setViewMode(currentView)
+    }
+  }, [getViewFromSearch, viewMode])
+
+  const handleChangeView = useCallback((nextView) => {
+    setViewMode(nextView)
+    const params = new URLSearchParams(location.search)
+    if (nextView === 'map') {
+      params.set('view', 'map')
+    } else {
+      params.delete('view')
+    }
+    const search = params.toString()
+    navigate({ pathname: location.pathname, search: search ? `?${search}` : '' }, { replace: true })
+  }, [location.pathname, location.search, navigate])
 
   const companies = useMemo(() => {
     const list = directoryData?.items ?? directoryData?.companies ?? []
@@ -245,13 +366,49 @@ export default function DirectoryPage() {
     return counts
   }, [wasteOptions])
 
-  const distanceLabel = `${maxDistance} km`
+  const distanceLabel = `${pendingMaxDistance} km`
+
+  const handleApply = () => {
+    const nextAppliedSectors = new Set(pendingSectors)
+    const nextAppliedWastes = new Set(pendingWasteTypes)
+    const hasSearchChanged = pendingSearchTerm !== appliedSearchTerm
+    const hasDistanceChanged = pendingMaxDistance !== appliedMaxDistance
+    const hasSectorsChanged = !areSetsEqual(appliedSectors, nextAppliedSectors)
+    const hasWastesChanged = !areSetsEqual(appliedWasteTypes, nextAppliedWastes)
+
+    if (hasSearchChanged) {
+      setAppliedSearchTerm(pendingSearchTerm)
+    }
+    if (hasDistanceChanged) {
+      setAppliedMaxDistance(pendingMaxDistance)
+    }
+    if (hasSectorsChanged) {
+      setAppliedSectors(nextAppliedSectors)
+    }
+    if (hasWastesChanged) {
+      setAppliedWasteTypes(nextAppliedWastes)
+    }
+
+    if (hasSearchChanged || hasDistanceChanged || hasSectorsChanged || hasWastesChanged) {
+      setPage(1)
+      return
+    }
+
+    refetch()
+  }
 
   const handleReset = () => {
-    setSearchTerm('')
-    setSelectedSectors(new Set(defaultSectorValuesRef.current ?? []))
-    setSelectedWasteTypes(new Set(defaultWasteValuesRef.current ?? []))
-    setMaxDistance(DEFAULT_MAX_DISTANCE)
+    const defaultSectorsArray = Array.from(defaultSectorValuesRef.current ?? [])
+    const defaultWastesArray = Array.from(defaultWasteValuesRef.current ?? [])
+
+    setPendingSearchTerm('')
+    setAppliedSearchTerm('')
+    setPendingSectors(new Set(defaultSectorsArray))
+    setAppliedSectors(new Set(defaultSectorsArray))
+    setPendingWasteTypes(new Set(defaultWastesArray))
+    setAppliedWasteTypes(new Set(defaultWastesArray))
+    setPendingMaxDistance(DEFAULT_MAX_DISTANCE)
+    setAppliedMaxDistance(DEFAULT_MAX_DISTANCE)
     setPage(1)
     setSectorsDirty(false)
     setWastesDirty(false)
@@ -282,6 +439,20 @@ export default function DirectoryPage() {
 
   const filterDisabled = isLoading && !sectorOptions.length && !wasteOptions.length
 
+  const handleOpenProfile = useCallback((company) => {
+    const targetId =
+      company?.id_company ??
+      company?.company_id ??
+      company?.uuid ??
+      company?.slug ??
+      company?.id
+    if (!targetId) return
+    navigate(
+  { pathname: `/companies/${targetId}` },
+      { state: { directoryCompany: company } }
+    )
+  }, [navigate])
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr]">
@@ -293,8 +464,8 @@ export default function DirectoryPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
+                    value={pendingSearchTerm}
+                    onChange={(event) => setPendingSearchTerm(event.target.value)}
                     placeholder="Nom d'entreprise, produit..."
                     className="pl-9"
                   />
@@ -319,14 +490,12 @@ export default function DirectoryPage() {
                             <input
                               type="checkbox"
                               className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                              checked={selectedSectors.has(sector.value)}
+                              checked={pendingSectors.has(sector.value)}
                               onChange={() =>
                                 toggleSelection(
                                   sector.value,
-                                  setSelectedSectors,
-                                  sectorsTouchedRef,
-                                  defaultSectorValuesRef,
-                                  setSectorsDirty
+                                  setPendingSectors,
+                                  sectorsTouchedRef
                                 )
                               }
                               disabled={filterDisabled}
@@ -348,14 +517,12 @@ export default function DirectoryPage() {
                             <input
                               type="checkbox"
                               className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                              checked={selectedWasteTypes.has(waste.value)}
+                              checked={pendingWasteTypes.has(waste.value)}
                               onChange={() =>
                                 toggleSelection(
                                   waste.value,
-                                  setSelectedWasteTypes,
-                                  wastesTouchedRef,
-                                  defaultWasteValuesRef,
-                                  setWastesDirty
+                                  setPendingWasteTypes,
+                                  wastesTouchedRef
                                 )
                               }
                               disabled={filterDisabled}
@@ -377,8 +544,8 @@ export default function DirectoryPage() {
                       min="1"
                       max="50"
                       step="1"
-                      value={maxDistance}
-                      onChange={(event) => setMaxDistance(Number(event.target.value))}
+                      value={pendingMaxDistance}
+                      onChange={(event) => setPendingMaxDistance(Number(event.target.value))}
                       className="w-full accent-blue-600"
                     />
                     <div className="flex justify-between text-xs text-slate-400">
@@ -398,7 +565,7 @@ export default function DirectoryPage() {
                 <Button
                   type="button"
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  onClick={() => refetch()}
+                  onClick={handleApply}
                   disabled={isFetching}
                 >
                   Appliquer
@@ -424,7 +591,7 @@ export default function DirectoryPage() {
                 type="button"
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 className={`h-10 w-10 p-0 ${viewMode === 'list' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                onClick={() => setViewMode('list')}
+                onClick={() => handleChangeView('list')}
                 aria-label="Vue liste"
               >
                 <List className={`h-5 w-5 ${viewMode === 'list' ? 'text-white' : 'text-slate-500'}`} />
@@ -433,7 +600,7 @@ export default function DirectoryPage() {
                 type="button"
                 variant={viewMode === 'map' ? 'default' : 'outline'}
                 className={`h-10 w-10 p-0 ${viewMode === 'map' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                onClick={() => setViewMode('map')}
+                onClick={() => handleChangeView('map')}
                 aria-label="Vue carte"
               >
                 <MapIcon className={`h-5 w-5 ${viewMode === 'map' ? 'text-white' : 'text-slate-500'}`} />
@@ -479,7 +646,11 @@ export default function DirectoryPage() {
           ) : (
             <div className="space-y-4">
               {companies.map((company) => (
-                <DirectoryCard key={company.id ?? company.name} company={company} />
+                <DirectoryCard
+                  key={company.id ?? company.name}
+                  company={company}
+                  onOpenProfile={handleOpenProfile}
+                />
               ))}
               {isFetching && (
                 <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
@@ -523,7 +694,7 @@ async function fetchDirectory({ queryKey }) {
     searchParams.set('limit', String(params.limit))
   }
 
-  const url = searchParams.toString() ? `/company/companies?${searchParams.toString()}` : '/company/companies'
+  const url = searchParams.toString() ? `/companies?${searchParams.toString()}` : '/companies'
   const response = await api.get(url)
   const payload = response.data
   if (payload && typeof payload === 'object' && 'data' in payload) {

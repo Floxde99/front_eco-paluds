@@ -9,9 +9,13 @@ import api from './Api.js'
  */
 export async function getCompanyProfile() {
   try {
-    const res = await api.get('/company/profile')
-    const company = res.data.company
+  const res = await api.get('/companies/profile')
+    const company = res.data?.company
+    if (!company) {
+      return null
+    }
     return {
+      id: company.id ?? company.id_company ?? company.company_id ?? company.uuid ?? null,
       general: {
         nom_entreprise: company.name,
         secteur: company.sector,
@@ -88,7 +92,7 @@ export async function createCompany(companyData) {
     
     console.log('📤 Cleaned data being sent:', cleanedData)
     
-    const res = await api.post('/company', cleanedData)
+  const res = await api.post('/companies', cleanedData)
     return res.data.company
   } catch (err) {
     console.error('❌ Error creating company:', err)
@@ -105,7 +109,7 @@ export async function updateCompanyGeneral(generalData) {
       description: generalData.description
     }
     
-    const res = await api.put('/company/general', transformedData)
+  const res = await api.put('/companies/general', transformedData)
     return res.data
   } catch (err) {
     console.error('❌ Error updating company general info:', err)
@@ -123,7 +127,7 @@ export async function updateCompanyGeneral(generalData) {
  */
 export async function getProductions() {
   try {
-    const res = await api.get('/company/productions')
+  const res = await api.get('/companies/productions')
     return res.data.productions || []
   } catch (err) {
     if (err?.response?.status === 404) {
@@ -155,7 +159,7 @@ export async function addProduction(productionData) {
       status: productionData.status || "active"
     }
     
-    const res = await api.post('/company/productions', transformedData)
+  const res = await api.post('/companies/productions', transformedData)
     // Backend returns: { message: "...", production: {...} }
     return res.data.production
   } catch (err) {
@@ -181,7 +185,7 @@ export async function updateProduction(id, productionData) {
       status: productionData.status || "active"
     }
     
-    const res = await api.put(`/company/productions/${id}`, transformedData)
+  const res = await api.put(`/companies/productions/${id}`, transformedData)
     // Backend returns: { message: "...", production: {...} }
     return res.data.production
   } catch (err) {
@@ -197,7 +201,7 @@ export async function updateProduction(id, productionData) {
  */
 export async function deleteProduction(id) {
   try {
-    const res = await api.delete(`/company/productions/${id}`)
+  const res = await api.delete(`/companies/productions/${id}`)
     return res.data
   } catch (err) {
     console.error('❌ Error deleting production:', err)
@@ -215,7 +219,7 @@ export async function deleteProduction(id) {
  */
 export async function getBesoins() {
   try {
-    const res = await api.get('/company/besoins')
+  const res = await api.get('/companies/besoins')
     return res.data.besoins || []
   } catch (err) {
     if (err?.response?.status === 404) {
@@ -247,7 +251,7 @@ export async function addBesoin(besoinData) {
       status: besoinData.status || "active"
     }
     
-    const res = await api.post('/company/besoins', transformedData)
+  const res = await api.post('/companies/besoins', transformedData)
     // Backend returns: { message: "...", besoin: {...} }
     return res.data.besoin
   } catch (err) {
@@ -273,7 +277,7 @@ export async function updateBesoin(id, besoinData) {
       status: besoinData.status || "active"
     }
     
-    const res = await api.put(`/company/besoins/${id}`, transformedData)
+  const res = await api.put(`/companies/besoins/${id}`, transformedData)
     // Backend returns: { message: "...", besoin: {...} }
     return res.data.besoin
   } catch (err) {
@@ -289,7 +293,7 @@ export async function updateBesoin(id, besoinData) {
  */
 export async function deleteBesoin(id) {
   try {
-    const res = await api.delete(`/company/besoins/${id}`)
+  const res = await api.delete(`/companies/besoins/${id}`)
     return res.data
   } catch (err) {
     console.error('❌ Error deleting besoin:', err)
@@ -307,7 +311,7 @@ export async function deleteBesoin(id) {
  */
 export async function getDechets() {
   try {
-    const res = await api.get('/company/dechets')
+  const res = await api.get('/companies/dechets')
     return res.data.dechets || []
   } catch (err) {
     if (err?.response?.status === 404) {
@@ -341,7 +345,7 @@ export async function addDechet(dechetData) {
       status: dechetData.status || "active"
     }
     
-    const res = await api.post('/company/dechets', transformedData)
+  const res = await api.post('/companies/dechets', transformedData)
     // Backend returns: { message: "...", dechet: {...} }
     return res.data.dechet
   } catch (err) {
@@ -368,7 +372,7 @@ export async function updateDechet(id, dechetData) {
       status: dechetData.status || "active"
     }
     
-    const res = await api.put(`/company/dechets/${id}`, transformedData)
+  const res = await api.put(`/companies/dechets/${id}`, transformedData)
     // Backend returns: { message: "...", dechet: {...} }
     return res.data.dechet
   } catch (err) {
@@ -384,7 +388,7 @@ export async function updateDechet(id, dechetData) {
  */
 export async function deleteDechet(id) {
   try {
-    const res = await api.delete(`/company/dechets/${id}`)
+  const res = await api.delete(`/companies/dechets/${id}`)
     return res.data
   } catch (err) {
     console.error('❌ Error deleting dechet:', err)
@@ -413,7 +417,7 @@ export async function updateGeolocation(geoData) {
       longitude: geoData.longitude
     }
     
-    const res = await api.put('/company/geolocation', transformedData)
+  const res = await api.put('/companies/geolocation', transformedData)
     // Backend returns: { message: "...", geolocation: {...} }
     return res.data.geolocation
   } catch (err) {
@@ -428,7 +432,7 @@ export async function updateGeolocation(geoData) {
  */
 export async function getGeolocation() {
   try {
-    const res = await api.get('/company/geolocation')
+  const res = await api.get('/companies/geolocation')
     return res.data.geolocation || null
   } catch (err) {
     if (err?.response?.status === 404) {

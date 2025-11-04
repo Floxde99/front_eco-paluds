@@ -14,7 +14,7 @@ const buildGuestItems = (navigationItems = []) => [
   { title: 'Connexion', href: '/login', icon: navigationItems[1]?.icon },
 ]
 
-export function NavbarMobileContent() {
+export function NavbarMobileContent({ textClassName = 'text-gray-700' }) {
   const {
     user,
     isAuthenticated,
@@ -23,6 +23,7 @@ export function NavbarMobileContent() {
     closeMobile,
     handleLogout,
   } = useNavbar()
+  const greetingName = user?.firstName ?? user?.prenom ?? user?.nom ?? ''
 
   const items = isAuthenticated
     ? [...navigationItems, ...userMenuItems]
@@ -33,9 +34,11 @@ export function NavbarMobileContent() {
       <SheetHeader>
         <SheetTitle>Menu</SheetTitle>
         <SheetDescription>
-                  <p className="text-sm text-muted-foreground">
-          {isAuthenticated ? `Bonjour ${user?.prenom} !` : 'Navigation du site Ecopaluds'}
-        </p>
+          <p className="text-sm text-muted-foreground">
+            {isAuthenticated
+              ? `Bonjour ${greetingName || 'utilisateur'} !`
+              : 'Navigation du site Ecopaluds'}
+          </p>
         </SheetDescription>
       </SheetHeader>
       <div className="grid gap-4 py-4">
@@ -44,6 +47,7 @@ export function NavbarMobileContent() {
         <NavbarNavigationLinks
           items={items.map((item) => ({ ...item, onClick: closeMobile }))}
           className="flex-col gap-2"
+          textClassName={textClassName}
         />
 
         <NavbarMobileActions

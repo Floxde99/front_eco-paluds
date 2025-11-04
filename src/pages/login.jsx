@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { loginUser, registerUser, getCurrentUser } from "@/services/Api"
+import { queryClient } from "@/lib/queryClient"
 import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormBuilder } from "@/components/forms/FormBuilder"
@@ -156,6 +157,7 @@ const Login = () => {
     } else if (err?.response?.status === 409) {
       // Conflit (email déjà existant)
       errorMessage = 'Un compte existe déjà avec cet email'
+          queryClient.clear()
     } else if (err?.response?.status === 422) {
       // Erreur de validation
       errorMessage = 'Les données fournies ne sont pas valides'

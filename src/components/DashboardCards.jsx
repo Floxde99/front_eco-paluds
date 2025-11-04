@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useDashboardData } from '@/hooks/useDashboardQuery'
 import { ProgressBar } from './ProgressBar'
+import { useNavigate } from 'react-router-dom'
 
 // Profile Completion Card
 export function ProfileCard() {
   const { completion, loading, error } = useDashboardData()
+  const navigate = useNavigate()
 
   if (error) {
     return (
@@ -60,7 +62,11 @@ export function ProfileCard() {
               </div>
             )}
           </div>
-          <Button className="w-full bg-blue-600 hover:bg-blue-700">
+          <Button
+            type="button"
+            onClick={() => navigate('/profile')}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
             Compléter mon profil
           </Button>
         </div>
@@ -72,6 +78,7 @@ export function ProfileCard() {
 // Suggestions Card
 export function SuggestionsCard() {
   const { stats, loading } = useDashboardData()
+  const navigate = useNavigate()
 
   const newCount = stats?.user_stats?.recent_connections || 0
   const totalCount = stats?.user_stats?.active_inputs + stats?.user_stats?.active_outputs || 0
@@ -107,7 +114,11 @@ export function SuggestionsCard() {
               </>
             )}
           </div>
-          <Button className="w-full bg-green-600 hover:bg-green-700">
+          <Button
+            type="button"
+            onClick={() => navigate('/suggestions')}
+            className="w-full bg-green-600 hover:bg-green-700"
+          >
             Voir les suggestions
           </Button>
         </div>
@@ -119,6 +130,7 @@ export function SuggestionsCard() {
 // Network Card
 export function NetworkCard() {
   const { stats, companies, loading } = useDashboardData()
+  const navigate = useNavigate()
 
   const connectedCount = companies?.length || 0
   const partnershipsCount = stats?.user_stats?.companies_owned || 0
@@ -150,8 +162,13 @@ export function NetworkCard() {
               </>
             )}
           </div>
-          <Button variant="outline" className="w-full">
-            Explorer l'annuaire
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => navigate('/contacts')}
+          >
+            Voir mes entreprises connectées
           </Button>
         </div>
       </CardContent>
