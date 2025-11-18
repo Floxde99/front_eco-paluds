@@ -22,6 +22,7 @@ import {
   createPayPalCheckoutSession,
   createSubscriptionPaymentIntent,
   fetchBillingPlans,
+  fetchSubscriptionStatus,
 } from '@/services/BillingApi'
 
 const SubscriptionPageContext = createContext(null)
@@ -46,6 +47,9 @@ const DEFAULT_FORM_DATA = {
   acceptTerms: false,
 }
 
+const SUBSCRIPTION_STATUS_POLL_INTERVAL_MS = 2500
+const SUBSCRIPTION_STATUS_POLL_TIMEOUT_MS = 20000
+
 function useSubscriptionPage() {
   const context = useContext(SubscriptionPageContext)
   if (!context) {
@@ -62,6 +66,7 @@ export default function SubscriptionPage() {
   const [intentError, setIntentError] = useState(null)
   const [intentRefreshCounter, setIntentRefreshCounter] = useState(0)
   const pendingPlanIdRef = useRef(null)
+  const subscriptionSelectionAppliedRef = useRef(false)
 
   const plansQuery = useQuery({
     queryKey: ['billing-plans'],
@@ -83,6 +88,48 @@ export default function SubscriptionPage() {
       const defaultPlan = highlighted ?? plans.find((plan) => !plan.preventSelection) ?? plans[0]
       return defaultPlan?.id ?? plans[0].id
     })
+  }, [plans])
+
+  useEffect(() => {
+    if (!plans.length || subscriptionSelectionAppliedRef.current) {
+      return
+    }
+
+    let isActive = true
+
+    async function selectSubscribedPlan() {
+      try {
+        const response = await fetchSubscriptionStatus()
+        const snapshot = normalizeSubscriptionStatusResponse(response)
+        if (
+          !isActive ||
+          !snapshot ||
+          !isActiveSubscriptionStatus(snapshot.status)
+        ) {
+          return
+        }
+
+        const subscribedPlanId = resolvePlanIdFromSubscriptionSnapshot(snapshot)
+        if (!subscribedPlanId) {
+          return
+        }
+
+        const planExists = plans.some((plan) => plan.id === subscribedPlanId)
+        if (planExists) {
+          setSelectedPlanId(subscribedPlanId)
+        }
+      } catch (error) {
+        // ignore unauthorized or missing subscription errors
+      } finally {
+        subscriptionSelectionAppliedRef.current = true
+      }
+    }
+
+    selectSubscribedPlan()
+
+    return () => {
+      isActive = false
+    }
   }, [plans])
 
   const selectedPlan = useMemo(
@@ -446,7 +493,9 @@ function PaymentForm() {
   const [formError, setFormError] = useState(null)
   const [successMessage, setSuccessMessage] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [statusAlert, setStatusAlert] = useState(null)
   const cardPaymentRef = useRef(null)
+  const retryPaymentRef = useRef(null)
 
   const { mutateAsync: startPayPalCheckout, isPending: isStartingPayPal } = useMutation({
     mutationFn: createPayPalCheckoutSession,
@@ -455,7 +504,48 @@ function PaymentForm() {
   useEffect(() => {
     setFormError(null)
     setSuccessMessage(null)
+    setStatusAlert(null)
   }, [selectedPlan, selectedPaymentMethod])
+
+  const retrieveSubscriptionSnapshot = useCallback(async () => {
+    try {
+      const response = await fetchSubscriptionStatus()
+      return normalizeSubscriptionStatusResponse(response)
+    } catch (error) {
+      const statusError = new Error(
+        error?.response?.data?.message ??
+          error?.message ??
+          "Impossible de r�cup�rer l'�tat de l'abonnement pour le moment.",
+      )
+      statusError.reason = 'subscription-status'
+      throw statusError
+    }
+  }, [])
+
+  const waitForSubscriptionConfirmation = useCallback(async () => {
+    let snapshot = await retrieveSubscriptionSnapshot()
+
+    if (!snapshot || !snapshot.status || !isProcessingSubscriptionStatus(snapshot.status)) {
+      return snapshot
+    }
+
+    setStatusAlert({
+      variant: 'info',
+      message: 'Paiement en cours de confirmation…',
+    })
+
+    const deadline = Date.now() + SUBSCRIPTION_STATUS_POLL_TIMEOUT_MS
+
+    while (Date.now() < deadline) {
+      await delay(SUBSCRIPTION_STATUS_POLL_INTERVAL_MS)
+      snapshot = await retrieveSubscriptionSnapshot()
+      if (!snapshot || !snapshot.status || !isProcessingSubscriptionStatus(snapshot.status)) {
+        return snapshot
+      }
+    }
+
+    return snapshot
+  }, [retrieveSubscriptionSnapshot, setStatusAlert])
 
   const handleChange = useCallback(
     (field) => (event) => {
@@ -465,80 +555,164 @@ function PaymentForm() {
     [setFormData],
   )
 
+  const attemptPayment = useCallback(async () => {
+    if (isSubmitting) {
+      return
+    }
+
+    setFormError(null)
+    setSuccessMessage(null)
+    setStatusAlert(null)
+
+    if (!formData.acceptTerms) {
+      setFormError({ message: 'Vous devez accepter les conditions générales pour continuer.' })
+      return
+    }
+
+    if (!requiresPayment) {
+      setSuccessMessage('Votre abonnement gratuit est activé. Bonne continuation !')
+      return
+    }
+
+    if (selectedPaymentMethod === 'paypal') {
+      if (!selectedPlan?.id) {
+        setFormError({ message: 'Impossible de déterminer le plan sélectionné.' })
+        return
+      }
+      try {
+        setIsSubmitting(true)
+        const response = await startPayPalCheckout({ planId: selectedPlan.id })
+        const approvalUrl = response?.approvalUrl ?? response?.url
+        if (!approvalUrl) {
+          throw new Error('URL de redirection PayPal introuvable.')
+        }
+        window.location.href = approvalUrl
+      } catch (error) {
+        const message =
+          error?.response?.data?.message ?? error.message ?? 'Impossible de démarrer le paiement PayPal.'
+        setFormError({ message })
+      } finally {
+        setIsSubmitting(false)
+      }
+      return
+    }
+
+    if (selectedPaymentMethod === 'card') {
+      if (!stripePromise) {
+        setFormError({
+          message: "Stripe n'est pas configuré. Ajoutez VITE_STRIPE_PUBLISHABLE_KEY à votre environnement.",
+        })
+        return
+      }
+      if (!clientSecret) {
+        setFormError({
+          message: "Le paiement n'est pas prêt. Veuillez patienter quelques secondes et réessayer.",
+        })
+        return
+      }
+
+      try {
+        setIsSubmitting(true)
+        setStatusAlert({
+          variant: 'info',
+          message: 'Confirmation du paiement en cours…',
+        })
+        const confirm = await cardPaymentRef.current?.confirmPayment()
+        if (confirm) {
+          const snapshot = await waitForSubscriptionConfirmation()
+
+          if (snapshot && isActiveSubscriptionStatus(snapshot.status)) {
+            setSuccessMessage('Paiement confirmé ! Votre abonnement est actif.')
+            setStatusAlert(null)
+            return
+          }
+
+          if (snapshot && isProcessingSubscriptionStatus(snapshot.status)) {
+            setStatusAlert({
+              variant: 'info',
+              message: 'Paiement en cours de confirmation… Nous actualiserons cette page automatiquement.',
+            })
+            return
+          }
+
+          setStatusAlert(null)
+
+          if (snapshot?.status === 'requires_payment_method') {
+            setFormError({ message: 'Carte refusée, réessayez avec une autre carte.' })
+            return
+          }
+
+          if (snapshot?.status === 'canceled') {
+            setFormError({ message: 'Paiement annulé' })
+            return
+          }
+
+          if (!snapshot) {
+            setFormError({
+              message:
+                "Paiement confirmé mais impossible de récupérer l'état de l'abonnement. Réessayez dans quelques instants.",
+              actionLabel: 'Réessayer',
+              onAction: () => retryPaymentRef.current?.(),
+            })
+            return
+          }
+
+          setFormError({
+            message:
+              "Le paiement est enregistré mais nous n'avons pas pu activer l'abonnement. Contactez le support si l'état ne change pas.",
+          })
+        }
+      } catch (error) {
+        setStatusAlert(null)
+        const fallbackMessage = error?.message ?? 'Le paiement a échoué. Veuillez vérifier vos informations.'
+
+        if (error?.reason === 'stripe-confirmation') {
+          setFormError({
+            message: fallbackMessage,
+            ...(error?.isNetworkTimeout
+              ? {
+                  actionLabel: 'Réessayer',
+                  onAction: () => retryPaymentRef.current?.(),
+                }
+              : {}),
+          })
+        } else {
+          setFormError({
+            message:
+              fallbackMessage ??
+              "Paiement confirmé mais impossible de vérifier l'abonnement. Actualisez la page ou réessayez.",
+            actionLabel: 'Réessayer',
+            onAction: () => retryPaymentRef.current?.(),
+          })
+        }
+      } finally {
+        setIsSubmitting(false)
+      }
+    }
+  }, [
+    cardPaymentRef,
+    clientSecret,
+    formData.acceptTerms,
+    isSubmitting,
+    requiresPayment,
+    selectedPaymentMethod,
+    selectedPlan?.id,
+    startPayPalCheckout,
+    stripePromise,
+    waitForSubscriptionConfirmation,
+  ])
+
   const handleSubmit = useCallback(
-    async (event) => {
+    (event) => {
       event.preventDefault()
-      setFormError(null)
-      setSuccessMessage(null)
-
-      if (!formData.acceptTerms) {
-        setFormError('Vous devez accepter les conditions générales pour continuer.')
-        return
-      }
-
-      if (!requiresPayment) {
-        setSuccessMessage('Votre abonnement gratuit est activé. Bonne continuation !')
-        return
-      }
-
-      if (selectedPaymentMethod === 'paypal') {
-        if (!selectedPlan?.id) {
-          setFormError('Impossible de déterminer le plan sélectionné.')
-          return
-        }
-        try {
-          setIsSubmitting(true)
-          const response = await startPayPalCheckout({ planId: selectedPlan.id })
-          const approvalUrl = response?.approvalUrl ?? response?.url
-          if (!approvalUrl) {
-            throw new Error('URL de redirection PayPal introuvable.')
-          }
-          window.location.href = approvalUrl
-        } catch (error) {
-          const message =
-            error?.response?.data?.message ?? error.message ?? 'Impossible de démarrer le paiement PayPal.'
-          setFormError(message)
-        } finally {
-          setIsSubmitting(false)
-        }
-        return
-      }
-
-      if (selectedPaymentMethod === 'card') {
-        if (!stripePromise) {
-          setFormError('Stripe n\'est pas configuré. Ajoutez VITE_STRIPE_PUBLISHABLE_KEY à votre environnement.')
-          return
-        }
-        if (!clientSecret) {
-          setFormError('Le paiement n\'est pas prêt. Veuillez patienter quelques secondes et réessayer.')
-          return
-        }
-
-        try {
-          setIsSubmitting(true)
-          const confirm = await cardPaymentRef.current?.confirmPayment()
-          if (confirm === true) {
-            setSuccessMessage('Paiement confirmé. Votre abonnement sera activé sous peu !')
-          }
-        } catch (error) {
-          const message = error?.message ?? 'Le paiement a échoué. Veuillez vérifier vos informations.'
-          setFormError(message)
-        } finally {
-          setIsSubmitting(false)
-        }
-      }
+      attemptPayment()
     },
-    [
-      cardPaymentRef,
-      clientSecret,
-      formData.acceptTerms,
-      requiresPayment,
-      selectedPaymentMethod,
-      selectedPlan?.id,
-      startPayPalCheckout,
-      stripePromise,
-    ],
+    [attemptPayment],
   )
+
+  useEffect(() => {
+    retryPaymentRef.current = attemptPayment
+  }, [attemptPayment])
 
   const cardPaymentEnabled = requiresPayment && selectedPaymentMethod === 'card'
   const cardReady = cardPaymentEnabled && stripePromise && clientSecret
@@ -617,7 +791,15 @@ function PaymentForm() {
         </div>
       </div>
 
-      {formError ? <InlineAlert variant="error" message={formError} /> : null}
+      {formError ? (
+        <InlineAlert
+          variant="error"
+          message={formError.message}
+          actionLabel={formError.actionLabel}
+          onAction={formError.onAction}
+        />
+      ) : null}
+      {statusAlert ? <InlineAlert variant={statusAlert.variant} message={statusAlert.message} /> : null}
       {successMessage ? <InlineAlert variant="success" message={successMessage} /> : null}
 
       <div className="flex justify-end">
@@ -649,7 +831,7 @@ const CardPaymentFields = React.forwardRef(function CardPaymentFields({ formData
 
     setError(null)
 
-    const { error: confirmationError } = await stripe.confirmPayment({
+    const { error: confirmationError, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/abonnement?paiement=success`,
@@ -671,13 +853,19 @@ const CardPaymentFields = React.forwardRef(function CardPaymentFields({ formData
     })
 
     if (confirmationError) {
-      const message = confirmationError.message ?? 'Le paiement a été refusé. Vérifiez vos informations.'
-      setError(message)
-      throw new Error(message)
+      const normalizedError = normalizeStripeConfirmationError(confirmationError)
+      setError(normalizedError.message)
+      const raised = new Error(normalizedError.message)
+      raised.code = normalizedError.code
+      raised.paymentIntentStatus = normalizedError.paymentIntentStatus
+      raised.reason = 'stripe-confirmation'
+      raised.isNetworkTimeout = normalizedError.isNetworkTimeout
+      throw raised
     }
 
-    return true
+    return paymentIntent ?? true
   }, [elements, formData, stripe])
+
 
   useEffect(() => {
     if (ref) {
@@ -815,7 +1003,7 @@ function PaymentMethodToggle({ selectedPaymentMethod, setSelectedPaymentMethod, 
   )
 }
 
-function InlineAlert({ variant, message, icon }) {
+function InlineAlert({ variant, message, icon, actionLabel, onAction }) {
   const palette = {
     error: 'border-red-200 bg-red-50 text-red-700',
     success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
@@ -833,7 +1021,16 @@ function InlineAlert({ variant, message, icon }) {
   return (
     <div className={cn('flex items-center gap-2 rounded-md border px-3 py-2 text-sm', palette[variant])}>
       {Icon}
-      <span>{message}</span>
+      <span className="flex-1">{message}</span>
+      {actionLabel && onAction ? (
+        <button
+          type="button"
+          onClick={onAction}
+          className="text-sm font-semibold text-current underline-offset-4 transition hover:underline"
+        >
+          {actionLabel}
+        </button>
+      ) : null}
     </div>
   )
 }
@@ -865,6 +1062,108 @@ function SubscriptionErrorState({ message }) {
       </main>
     </div>
   )
+}
+
+function normalizeSubscriptionStatusResponse(payload) {
+  if (!payload) {
+    return null
+  }
+
+  const subscription =
+    payload.subscription ??
+    payload.data?.subscription ??
+    payload.data ??
+    payload
+
+  if (!subscription || typeof subscription !== 'object') {
+    return { status: null, raw: payload }
+  }
+
+  const status = subscription.status ?? subscription.state ?? subscription.subscriptionStatus ?? null
+  const plan =
+    subscription.plan ??
+    subscription.price ??
+    (Array.isArray(subscription.items?.data) ? subscription.items.data[0]?.plan : null) ??
+    null
+  const planId = subscription.planId ?? plan?.id ?? plan?.product ?? null
+
+  return {
+    status,
+    planId,
+    plan,
+    raw: subscription,
+  }
+}
+
+function isProcessingSubscriptionStatus(status) {
+  return status === 'processing' || status === 'pending'
+}
+
+function isActiveSubscriptionStatus(status) {
+  return status === 'active' || status === 'trialing' || status === 'complete'
+}
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
+function normalizeStripeConfirmationError(stripeError) {
+  const paymentIntentStatus = stripeError?.payment_intent?.status ?? null
+
+  if (paymentIntentStatus === 'requires_payment_method') {
+    return {
+      message: 'Carte refusée, réessayez avec une autre carte.',
+      code: paymentIntentStatus,
+      paymentIntentStatus,
+      isNetworkTimeout: false,
+    }
+  }
+
+  if (paymentIntentStatus === 'canceled' || stripeError?.code === 'canceled') {
+    return {
+      message: 'Paiement annulé',
+      code: 'canceled',
+      paymentIntentStatus: paymentIntentStatus ?? 'canceled',
+      isNetworkTimeout: false,
+    }
+  }
+
+  const fallbackMessage =
+    stripeError?.message ?? 'Le paiement a échoué. Veuillez vérifier vos informations.'
+
+  const isNetworkTimeout =
+    stripeError?.code === 'api_connection_error' ||
+    stripeError?.type === 'api_connection_error' ||
+    /timeout/i.test(fallbackMessage)
+
+  return {
+    message: fallbackMessage,
+    code: stripeError?.code ?? paymentIntentStatus ?? 'stripe_error',
+    paymentIntentStatus,
+    isNetworkTimeout,
+  }
+}
+
+function resolvePlanIdFromSubscriptionSnapshot(snapshot) {
+  if (!snapshot) {
+    return null
+  }
+
+  const candidates = [
+    snapshot.planId,
+    snapshot.plan?.id,
+    snapshot.plan?.planId,
+    snapshot.plan?.product,
+    snapshot.raw?.planId,
+    snapshot.raw?.plan_id,
+    snapshot.raw?.plan?.id,
+    snapshot.raw?.priceId,
+    snapshot.raw?.price?.id,
+  ]
+
+  return candidates.find(Boolean) ?? null
 }
 
 function extractBillingDetails(formData) {

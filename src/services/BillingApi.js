@@ -5,6 +5,11 @@ export async function fetchBillingPlans() {
   return response.data
 }
 
+export async function fetchSubscriptionStatus() {
+  const response = await api.get('/billing/subscription')
+  return response.data
+}
+
 export async function createSubscriptionPaymentIntent({ planId, paymentMethodType = 'card', billingDetails }) {
   const response = await api.post('/billing/payment-intents', {
     planId,

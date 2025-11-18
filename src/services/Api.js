@@ -9,6 +9,26 @@ const api = axios.create({
 	timeout: parseInt(API_TIMEOUT),
 });
 
+function persistAccessTokenFromHeaders(headers) {
+	if (
+		typeof window === 'undefined' ||
+		typeof localStorage === 'undefined' ||
+		!headers ||
+		typeof headers !== 'object'
+	) {
+		return
+	}
+
+	const headerValue =
+		headers['x-access-token'] ??
+		headers['X-Access-Token'] ??
+		(typeof headers.get === 'function' ? headers.get('x-access-token') : null)
+
+	if (headerValue) {
+		localStorage.setItem('authToken', headerValue)
+	}
+}
+
 // Add request interceptor to include auth token
 api.interceptors.request.use(
 	(config) => {
@@ -26,6 +46,17 @@ api.interceptors.request.use(
 	(error) => {
 		return Promise.reject(error)
 	}
+)
+
+api.interceptors.response.use(
+	(response) => {
+		persistAccessTokenFromHeaders(response?.headers)
+		return response
+	},
+	(error) => {
+		persistAccessTokenFromHeaders(error?.response?.headers)
+		return Promise.reject(error)
+	},
 )
 
 // Centralized API helpers
