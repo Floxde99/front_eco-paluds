@@ -43,14 +43,14 @@ const PAGE_SIZE = 10
 const STATUS_TONE_CLASSES = {
   success: "border-emerald-100 bg-emerald-50 text-emerald-700",
   pending: "border-amber-100 bg-amber-50 text-amber-700",
-  inactive: "border-gray-200 bg-gray-100 text-gray-600",
+  inactive: "border-slate-200 bg-slate-100 text-slate-600",
 }
 
 const TREND_TONE_CLASSES = {
   positive: "text-emerald-600",
   negative: "text-red-500",
   warning: "text-amber-600",
-  neutral: "text-gray-500",
+  neutral: "text-slate-500",
 }
 
 const TREND_ICONS = {
@@ -482,7 +482,7 @@ export default function AdminDashboardPage() {
 
   const renderTrend = (tone, label) => {
     if (!label) {
-      return <span className="text-gray-400 text-sm">Données indisponibles</span>
+      return <span className="text-slate-400 text-sm">Données indisponibles</span>
     }
     const Icon = TREND_ICONS[tone] ?? TREND_ICONS.neutral
     return (
@@ -494,15 +494,15 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-slate-100">
       <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
         <section className="space-y-6">
           <div>
-            <h1 className="text-3xl font-semibold text-gray-900">
+            <h1 className="text-3xl font-semibold text-slate-900">
               Tableau de bord administrateur
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Surveillez l’activité des entreprises et les actions de modération
+            <p className="mt-1 text-sm text-slate-500">
+              Surveillez l'activité des entreprises et les actions de modération
               en temps réel.
             </p>
           </div>
@@ -529,13 +529,13 @@ export default function AdminDashboardPage() {
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
               {metricsQuery.isLoading
                 ? Array.from({ length: 4 }).map((_, index) => (
-                    <Card key={`metrics-skeleton-${index}`} className="border border-gray-200">
+                    <Card key={`metrics-skeleton-${index}`} className="border border-slate-200">
                       <CardHeader>
-                        <Skeleton className="h-4 w-24 bg-gray-200" />
-                        <Skeleton className="mt-2 h-8 w-20 bg-gray-200" />
+                        <Skeleton className="h-4 w-24 bg-slate-200" />
+                        <Skeleton className="mt-2 h-8 w-20 bg-slate-200" />
                       </CardHeader>
                       <CardContent>
-                        <Skeleton className="h-4 w-32 bg-gray-200" />
+                        <Skeleton className="h-4 w-32 bg-slate-200" />
                       </CardContent>
                     </Card>
                   ))
@@ -543,18 +543,18 @@ export default function AdminDashboardPage() {
                     const tone = card.changeTone ?? "neutral"
                     const Icon = card.Icon
                     return (
-                      <Card key={card.key} className="border border-gray-200">
+                      <Card key={card.key} className="border border-slate-200">
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="text-sm font-medium text-gray-600">
+                              <p className="text-sm font-medium text-slate-600">
                                 {card.title}
                               </p>
-                              <p className="mt-2 text-3xl font-semibold text-gray-900">
+                              <p className="mt-2 text-3xl font-semibold text-slate-900">
                                 {card.value}
                               </p>
                             </div>
-                            <div className="rounded-full bg-gray-100 p-3 text-gray-600">
+                            <div className="rounded-full bg-slate-100 p-3 text-slate-600">
                               <Icon className="size-5" aria-hidden="true" />
                             </div>
                           </div>
@@ -573,17 +573,17 @@ export default function AdminDashboardPage() {
         <section className="space-y-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-slate-900">
                 Gestion des entreprises
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-500">
                 Filtrez, analysez ou modifiez les entreprises inscrites.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button
                 variant="outline"
-                className="border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                className="border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                 onClick={handleExport}
                 disabled={exporting}
               >
@@ -604,16 +604,16 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          <Card className="border border-gray-200">
+          <Card className="border border-slate-200">
             <CardHeader className="space-y-4">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
                 <div className="flex flex-1 flex-wrap gap-4">
                   <div className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold uppercase text-gray-500">
+                    <span className="text-xs font-semibold uppercase text-slate-500">
                       Statut
                     </span>
                     <select
-                      className="h-11 w-44 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="h-11 w-44 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={statusFilter}
                       onChange={handleStatusChange}
                     >
@@ -625,11 +625,11 @@ export default function AdminDashboardPage() {
                     </select>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold uppercase text-gray-500">
+                    <span className="text-xs font-semibold uppercase text-slate-500">
                       Secteur
                     </span>
                     <select
-                      className="h-11 w-48 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="h-11 w-48 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={sectorFilter}
                       onChange={handleSectorChange}
                     >
@@ -642,13 +642,13 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
                 <div className="relative w-full lg:w-80">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="search"
                     value={searchTerm}
                     onChange={handleSearchChange}
                     placeholder="Rechercher une entreprise..."
-                    className="h-11 w-full rounded-md border border-gray-300 bg-white pl-10 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="h-11 w-full rounded-md border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -670,8 +670,8 @@ export default function AdminDashboardPage() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-left text-sm text-gray-700">
-                    <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                  <table className="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-700">
+                    <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                       <tr>
                         <th className="px-6 py-3 font-semibold">Entreprise</th>
                         <th className="px-6 py-3 font-semibold">Secteur</th>
@@ -683,31 +683,31 @@ export default function AdminDashboardPage() {
                         <th className="px-6 py-3 font-semibold">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
+                    <tbody className="divide-y divide-slate-200 bg-white">
                       {companiesQuery.isLoading
                         ? Array.from({ length: 5 }).map((_, index) => (
                             <tr key={`company-skeleton-${index}`}>
                               <td className="px-6 py-4">
-                                <Skeleton className="h-4 w-40 bg-gray-200" />
-                                <Skeleton className="mt-2 h-3 w-32 bg-gray-200" />
+                                <Skeleton className="h-4 w-40 bg-slate-200" />
+                                <Skeleton className="mt-2 h-3 w-32 bg-slate-200" />
                               </td>
                               <td className="px-6 py-4">
-                                <Skeleton className="h-4 w-24 bg-gray-200" />
+                                <Skeleton className="h-4 w-24 bg-slate-200" />
                               </td>
                               <td className="px-6 py-4">
-                                <Skeleton className="h-6 w-20 rounded-full bg-gray-200" />
+                                <Skeleton className="h-6 w-20 rounded-full bg-slate-200" />
                               </td>
                               <td className="px-6 py-4">
-                                <Skeleton className="h-4 w-24 bg-gray-200" />
+                                <Skeleton className="h-4 w-24 bg-slate-200" />
                               </td>
                               <td className="px-6 py-4">
-                                <Skeleton className="h-4 w-28 bg-gray-200" />
+                                <Skeleton className="h-4 w-28 bg-slate-200" />
                               </td>
                               <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
-                                  <Skeleton className="size-5 rounded bg-gray-200" />
-                                  <Skeleton className="size-5 rounded bg-gray-200" />
-                                  <Skeleton className="size-5 rounded bg-gray-200" />
+                                  <Skeleton className="size-5 rounded bg-slate-200" />
+                                  <Skeleton className="size-5 rounded bg-slate-200" />
+                                  <Skeleton className="size-5 rounded bg-slate-200" />
                                 </div>
                               </td>
                             </tr>
@@ -715,7 +715,7 @@ export default function AdminDashboardPage() {
                         : companies.length === 0 ? (
                             <tr>
                               <td
-                                className="px-6 py-10 text-center text-sm text-gray-500"
+                                className="px-6 py-10 text-center text-sm text-slate-500"
                                 colSpan={6}
                               >
                                 Aucune entreprise ne correspond à votre recherche.
@@ -728,18 +728,18 @@ export default function AdminDashboardPage() {
                               STATUS_TONE_CLASSES.inactive
 
                             return (
-                              <tr key={company.id ?? company.name} className="hover:bg-gray-50">
+                              <tr key={company.id ?? company.name} className="hover:bg-slate-50">
                                 <td className="px-6 py-4">
                                   <div className="flex flex-col">
-                                    <span className="font-semibold text-gray-900">
+                                    <span className="font-semibold text-slate-900">
                                       {company.name}
                                     </span>
-                                    <span className="text-xs text-gray-500">
+                                    <span className="text-xs text-slate-500">
                                       {company.email ?? "—"}
                                     </span>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 text-gray-600">
+                                <td className="px-6 py-4 text-slate-600">
                                   {company.sector ?? "—"}
                                 </td>
                                 <td className="px-6 py-4">
@@ -749,20 +749,20 @@ export default function AdminDashboardPage() {
                                     {company.status ?? "Inconnu"}
                                   </Badge>
                                 </td>
-                                <td className="px-6 py-4 text-gray-600">
+                                <td className="px-6 py-4 text-slate-600">
                                   {formatDateValue(
                                     company.createdAt,
                                     company.createdAtLabel
                                   )}
                                 </td>
-                                <td className="px-6 py-4 text-gray-600">
+                                <td className="px-6 py-4 text-slate-600">
                                   {formatRelativeTimeValue(
                                     company.lastActivityAt,
                                     company.lastActivityLabel
                                   )}
                                 </td>
                                 <td className="px-6 py-4">
-                                  <div className="flex items-center gap-3 text-gray-400">
+                                  <div className="flex items-center gap-3 text-slate-400">
                                     <button
                                       type="button"
                                       className="transition-colors hover:text-blue-600"
@@ -798,14 +798,14 @@ export default function AdminDashboardPage() {
               )}
             </CardContent>
 
-            <div className="flex flex-col gap-4 border-t border-gray-200 px-6 py-4 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-4 border-t border-slate-200 px-6 py-4 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
               <p>
                 Affichage de {displayStart} à {displayEnd} sur {totalItems} entreprises
               </p>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  className="border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                   onClick={() => handleChangePage(pagination.page - 1)}
                   disabled={pagination.page <= 1 || companiesQuery.isLoading}
                 >
@@ -814,7 +814,7 @@ export default function AdminDashboardPage() {
                 {paginationSequence.map((entry, index) => {
                   if (typeof entry === "string") {
                     return (
-                      <span key={`${entry}-${index}`} className="px-2 text-gray-400">
+                      <span key={`${entry}-${index}`} className="px-2 text-slate-400">
                         …
                       </span>
                     )
@@ -827,7 +827,7 @@ export default function AdminDashboardPage() {
                       className={
                         isActive
                           ? "bg-blue-600 px-4 py-2 text-sm hover:bg-blue-700"
-                          : "border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          : "border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                       }
                       onClick={() => handleChangePage(entry)}
                       disabled={companiesQuery.isLoading}
@@ -838,7 +838,7 @@ export default function AdminDashboardPage() {
                 })}
                 <Button
                   variant="outline"
-                  className="border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                   onClick={() => handleChangePage(pagination.page + 1)}
                   disabled={
                     pagination.page >= pagination.totalPages ||
@@ -853,7 +853,7 @@ export default function AdminDashboardPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-slate-900">
             Statistiques système
           </h2>
           <div className="grid gap-6 md:grid-cols-3">
@@ -877,13 +877,13 @@ export default function AdminDashboardPage() {
               </Card>
             ) : statsQuery.isLoading ? (
               Array.from({ length: 3 }).map((_, index) => (
-                <Card key={`system-skeleton-${index}`} className="border border-gray-200">
+                <Card key={`system-skeleton-${index}`} className="border border-slate-200">
                   <CardHeader className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
-                      <Skeleton className="size-12 rounded-full bg-gray-200" />
-                      <Skeleton className="h-4 w-32 bg-gray-200" />
+                      <Skeleton className="size-12 rounded-full bg-slate-200" />
+                      <Skeleton className="h-4 w-32 bg-slate-200" />
                     </div>
-                    <Skeleton className="h-4 w-40 bg-gray-200" />
+                    <Skeleton className="h-4 w-40 bg-slate-200" />
                   </CardHeader>
                 </Card>
               ))
@@ -902,22 +902,22 @@ export default function AdminDashboardPage() {
                           : "number"
                       )
 
-                return (
+                  return (
                   <Card
                     key={stat.key}
-                    className="border border-gray-200 bg-white text-gray-700"
+                    className="border border-slate-200 bg-white text-slate-700"
                   >
                     <CardHeader className="flex flex-col gap-3">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className="rounded-full bg-gray-100 p-3">
-                            <Icon className="size-5 text-gray-500" />
+                          <div className="rounded-full bg-slate-100 p-3">
+                            <Icon className="size-5 text-slate-500" />
                           </div>
-                          <CardTitle className="text-base font-semibold text-gray-900">
+                          <CardTitle className="text-base font-semibold text-slate-900">
                             {stat.title}
                           </CardTitle>
                         </div>
-                        <span className="text-xl font-semibold text-gray-900">
+                        <span className="text-xl font-semibold text-slate-900">
                           {valueDisplay}
                         </span>
                       </div>
@@ -925,9 +925,9 @@ export default function AdminDashboardPage() {
                         {stat.changeLabel ?? "Aucune donnée disponible"}
                       </CardDescription>
                       {stat.key === "sectors" && stat.valueLabel && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-slate-500">
                           Secteur principal :{" "}
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-slate-900">
                             {stat.valueLabel}
                           </span>
                         </p>

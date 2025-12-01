@@ -12,10 +12,8 @@ import {
 import { dashboardKeys } from '@/hooks/useDashboardQuery'
 import { toast } from 'sonner'
 
-/**
- * Hooks de messagerie entreprise
- * Architecture simplifiée pour correspondre au backend
- */
+// Hooks de messagerie entreprise
+// Architecture simplifiee pour correspondre au backend
 
 export const messagingKeys = {
   all: ['company-messages'],
@@ -46,11 +44,13 @@ export function useCompanyConversation(conversationId) {
 }
 
 export function useCompanyConversationMessages(conversationId, params = {}) {
+  const { pollInterval } = params
+
   return useQuery({
-    queryKey: [...messagingKeys.messages(conversationId), params],
+    queryKey: messagingKeys.messages(conversationId),
     queryFn: () => getCompanyMessages(conversationId, params),
     enabled: Boolean(conversationId),
-    refetchInterval: params?.pollInterval ?? 10_000,
+    refetchInterval: pollInterval ?? 10_000,
     keepPreviousData: true,
   })
 }
@@ -69,7 +69,7 @@ export function useCreateCompanyContact() {
       queryClient.invalidateQueries({ queryKey: dashboardKeys.stats() })
     },
     onError: (error) => {
-      const message = error?.response?.data?.message ?? error?.message ?? 'Impossible de créer la relation'
+      const message = error?.response?.data?.message ?? error?.message ?? 'Impossible de creer la relation'
       toast.error(message)
     },
   })
@@ -80,14 +80,14 @@ export function useCreateCompanyConversation() {
   return useMutation({
     mutationFn: createCompanyConversation,
     onSuccess: (conversation) => {
-      toast.success('Conversation créée')
+      toast.success('Conversation creee')
       queryClient.invalidateQueries({ queryKey: messagingKeys.list() })
       if (conversation?.id) {
         queryClient.invalidateQueries({ queryKey: messagingKeys.detail(conversation.id) })
       }
     },
     onError: (error) => {
-      const message = error?.response?.data?.message ?? error?.message ?? 'Impossible de créer la conversation'
+      const message = error?.response?.data?.message ?? error?.message ?? 'Impossible de creer la conversation'
       toast.error(message)
     },
   })
@@ -98,8 +98,16 @@ export function useSendCompanyMessage() {
   return useMutation({
     mutationFn: sendCompanyMessage,
     onSuccess: (message) => {
-      toast.success('Message envoyé')
+      toast.success('Message envoye')
       if (message?.conversationId) {
+        queryClient.setQueryData(messagingKeys.messages(message.conversationId), (old) => {
+          const existing = Array.isArray(old) ? old : []
+          const alreadyThere = existing.some((item) => item.id === message.id)
+          if (alreadyThere) {
+            return existing
+          }
+          return [...existing, { ...message, isOwn: true }]
+        })
         queryClient.invalidateQueries({ queryKey: messagingKeys.messages(message.conversationId) })
       }
       queryClient.invalidateQueries({ queryKey: messagingKeys.list() })
@@ -125,7 +133,7 @@ export function useMarkConversationAsRead() {
 }
 
 // ============================================================================
-// HELPERS COMPOSÉS
+// HELPERS COMPOSES
 // ============================================================================
 
 export function useMessagingHelpers() {

@@ -1,23 +1,24 @@
 import { QueryClient } from '@tanstack/react-query'
+import { QUERY_CONFIG } from '@/config/constants'
 
 // Configuration du client React Query
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       // Cache data for 5 minutes
-      staleTime: 5 * 60 * 1000,
+      staleTime: QUERY_CONFIG.STALE_TIME,
       // Keep data in cache for 10 minutes after component unmount
-      gcTime: 10 * 60 * 1000,
+      gcTime: QUERY_CONFIG.GC_TIME,
       // Retry failed requests 3 times
-      retry: 3,
+      retry: QUERY_CONFIG.RETRY_COUNT,
       // Refetch when window regains focus
       refetchOnWindowFocus: true,
-      // Don't refetch on reconnect to avoid spam
-      refetchOnReconnect: 'always',
+      // Refetch on reconnect
+      refetchOnReconnect: true,
     },
     mutations: {
       // Retry mutations once
-      retry: 1,
+      retry: QUERY_CONFIG.MUTATION_RETRY_COUNT,
     },
   },
 })

@@ -10,8 +10,8 @@ export default function SuggestionsStatsBar({ stats = {} }) {
       <SuggestionsStatBlock
         value={stats.newThisWeek ?? 0}
         label="Nouvelles cette semaine"
-        backgroundClass="bg-green-100"
-        textClass="text-green-600"
+        backgroundClass="bg-emerald-100"
+        textClass="text-emerald-600"
       />
       <SuggestionsStatBlock
         value={stats.pending ?? 0}

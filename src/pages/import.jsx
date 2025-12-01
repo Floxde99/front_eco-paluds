@@ -334,7 +334,7 @@ function PageHeader({ stats }) {
             <p className="text-sm text-slate-600">Imports ce mois</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">{stats.precisionRate || 94}%</p>
+            <p className="text-2xl font-bold text-emerald-600">{stats.precisionRate || 94}%</p>
             <p className="text-sm text-slate-600">Précision IA</p>
           </div>
         </div>
@@ -371,7 +371,7 @@ function ImportSteps({ currentStep }) {
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full border-2 font-semibold ${
                     step.isCompleted
-                      ? 'border-green-600 bg-green-600 text-white'
+                      ? 'border-emerald-600 bg-emerald-600 text-white'
                       : step.isCurrent
                       ? 'border-blue-600 bg-blue-600 text-white'
                       : 'border-slate-300 bg-white text-slate-400'
@@ -384,14 +384,14 @@ function ImportSteps({ currentStep }) {
                   step.status === 'EN COURS'
                     ? 'text-blue-600'
                     : step.status === 'TERMINÉ'
-                    ? 'text-green-600'
+                    ? 'text-emerald-600'
                     : 'text-slate-400'
                 }`}>
                   {step.status}
                 </p>
               </div>
               {index < steps.length - 1 && (
-                <div className={`h-0.5 flex-1 ${step.isCompleted ? 'bg-green-600' : 'bg-slate-200'}`} />
+                <div className={`h-0.5 flex-1 ${step.isCompleted ? 'bg-emerald-600' : 'bg-slate-200'}`} />
               )}
             </div>
           ))}
@@ -516,7 +516,7 @@ function ExcelTemplateCard({ onDownload }) {
                   <td className="p-2">
                     <Badge className={
                       row.type === 'Déchet' ? 'bg-red-100 text-red-700' :
-                      row.type === 'Production' ? 'bg-green-100 text-green-700' :
+                      row.type === 'Production' ? 'bg-emerald-100 text-emerald-700' :
                       'bg-amber-100 text-amber-700'
                     }>
                       {row.type}
@@ -589,13 +589,13 @@ function ColumnMappingSection({ result, onNext, isMapping }) {
       <CardContent className="space-y-4">
         {hasResult ? (
           <div className="space-y-4">
-            <div className="rounded-md bg-green-50 p-4">
-              <p className="text-sm font-medium text-green-900">
+            <div className="rounded-md bg-emerald-50 p-4">
+              <p className="text-sm font-medium text-emerald-900">
                 {columns.length > 0
                   ? `${columns.length} colonne${columns.length > 1 ? 's' : ''} détectée${columns.length > 1 ? 's' : ''}`
                   : 'Résultat de mapping reçu'}
               </p>
-              <p className="text-xs text-green-800">
+              <p className="text-xs text-emerald-800">
                 {totalRows > 0
                   ? `${totalRows} ligne${totalRows > 1 ? 's' : ''} reconnue${totalRows > 1 ? 's' : ''}`
                   : 'Aucune ligne valide détectée pour le moment'}
@@ -801,10 +801,10 @@ function PredictionsCard({ data, isLoading }) {
 
 function PartnershipsCard({ data, isLoading }) {
   return (
-    <Card className="border-l-4 border-l-green-600">
+    <Card className="border-l-4 border-l-emerald-600">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Users className="h-5 w-5 text-green-600" />
+          <Users className="h-5 w-5 text-emerald-600" />
           Partenaires suggérés
         </CardTitle>
       </CardHeader>
@@ -820,7 +820,7 @@ function PartnershipsCard({ data, isLoading }) {
             {data.slice(0, 3).map((partner, idx) => (
               <div key={idx} className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">{partner.name}</span>
-                <Badge className="bg-green-100 text-green-700">{partner.score}%</Badge>
+                <Badge className="bg-emerald-100 text-emerald-700">{partner.score}%</Badge>
               </div>
             ))}
           </div>
@@ -932,7 +932,7 @@ function IntegrationSection({ profileSummary, syncResult, onSync, isSyncing }) {
             subtext="besoin actif"
           />
           <StatBox
-            icon={<TrendingUp className="h-5 w-5 text-green-600" />}
+            icon={<TrendingUp className="h-5 w-5 text-emerald-600" />}
             label="Analyses"
             value={profileSummary?.analyses || 0}
             subtext="analyses effectuées"
@@ -940,7 +940,7 @@ function IntegrationSection({ profileSummary, syncResult, onSync, isSyncing }) {
         </div>
 
         {syncResult && (
-          <div className={`rounded-md border p-4 ${hasSyncDetails ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}>
+          <div className={`rounded-md border p-4 ${hasSyncDetails ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
             <p className="text-sm font-medium text-slate-900">
               {hasSyncDetails
                 ? 'Résultat de la dernière synchronisation'
@@ -1018,7 +1018,7 @@ function ImportHistorySection({ history }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <Badge className={item.status === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}>
+                  <Badge className={item.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
                     {item.status === 'SUCCESS' ? 'SUCCÈS' : item.status}
                   </Badge>
                   <div className="flex gap-2">
@@ -1096,7 +1096,7 @@ function PremiumFeaturesSection({ onContactAI }) {
               <ul className="space-y-1">
                 {feature.items.map((item, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
                     <span>{item}</span>
                   </li>
                 ))}

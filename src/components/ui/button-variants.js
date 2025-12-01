@@ -6,9 +6,9 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-blue-600 text-white shadow hover:bg-blue-700",
-        success: "bg-green-600 text-white shadow hover:bg-green-700",
+        success: "bg-emerald-600 text-white shadow hover:bg-emerald-700",
         destructive: "bg-red-600 text-white shadow-xs hover:bg-red-700",
-        outline: "border bg-white shadow hover:bg-gray-50",
+        outline: "border bg-white shadow hover:bg-slate-50",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
       },

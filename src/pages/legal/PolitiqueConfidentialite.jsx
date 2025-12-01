@@ -5,7 +5,7 @@ export default function PolitiqueConfidentialite() {
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Politique de confidentialité</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-6">Politique de confidentialité</h1>
         <div className="prose prose-slate max-w-none">
           <p>
             La présente politique explique comment {LEGAL.appName} traite vos données personnelles,

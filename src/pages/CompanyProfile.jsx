@@ -151,8 +151,8 @@ export default function CompanyProfile() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Ma fiche entreprise</h1>
-          <p className="text-gray-600">Complétez votre profil pour maximiser vos opportunités</p>
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">Ma fiche entreprise</h1>
+          <p className="text-slate-600">Complétez votre profil pour maximiser vos opportunités</p>
         </div>
         <div className="flex space-x-3">
           <Button
@@ -163,7 +163,7 @@ export default function CompanyProfile() {
           >
             Aperçu public
           </Button>
-          <Button className="bg-green-600 hover:bg-green-700">Enregistrer</Button>
+          <Button className="bg-blue-600 hover:bg-blue-700">Enregistrer</Button>
         </div>
       </div>
 

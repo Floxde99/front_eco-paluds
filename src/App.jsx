@@ -28,7 +28,7 @@ export default function App() {
     <BrowserRouter>
       <Toaster />
       <Navbar />
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col bg-transparent">
         <div className="flex-1">
           <Routes>
             <Route path="/" element={<Landing />} />

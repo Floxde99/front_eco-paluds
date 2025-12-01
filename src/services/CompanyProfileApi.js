@@ -1,4 +1,7 @@
 import api from './Api.js'
+import { logger } from '@/lib/logger'
+import { validateCoordinates } from '@/lib/validation'
+import { transformResourceData, transformCompanyGeneralData, transformGeolocationData } from '@/lib/transformers'
 
 // Company Profile API functions
 // Following the same patterns as Api.js for consistency
@@ -39,7 +42,7 @@ export async function getCompanyProfile() {
       // Pas de profil encore : retourner null pour que le hook/composant gère l'état vide
       return null
     }
-    console.error('❌ Error fetching company profile:', err)
+    logger.error('Error fetching company profile:', err)
     throw err
   }
 }
@@ -61,8 +64,7 @@ export async function getCompanyProfile() {
  */
 export async function createCompany(companyData) {
   try {
-    // Debug : Afficher les données avant envoi
-    console.log('📤 Frontend sending company data:', companyData)
+    logger.api('POST', '/companies', companyData)
     
     // Validation des champs requis
     const requiredFields = ['name', 'sector', 'address', 'siret', 'phone', 'email', 'latitude', 'longitude']
@@ -71,9 +73,15 @@ export async function createCompany(companyData) {
     )
     
     if (missingFields.length > 0) {
-      console.error('❌ Missing required fields:', missingFields)
+      logger.error('Missing required fields:', missingFields)
       throw new Error(`Champs requis manquants: ${missingFields.join(', ')}`)
     }
+    
+    // Validate GPS coordinates
+    const { latitude, longitude } = validateCoordinates(
+      companyData.latitude,
+      companyData.longitude
+    )
     
     // S'assurer que tous les champs requis sont présents et valides
     const cleanedData = {
@@ -83,36 +91,31 @@ export async function createCompany(companyData) {
       siret: String(companyData.siret).trim(),
       phone: String(companyData.phone).trim(),
       email: String(companyData.email).trim(),
-      latitude: Number(companyData.latitude),
-      longitude: Number(companyData.longitude),
+      latitude,
+      longitude,
       // Champs optionnels
       ...(companyData.description && { description: String(companyData.description).trim() }),
       ...(companyData.website && { website: String(companyData.website).trim() })
     }
     
-    console.log('📤 Cleaned data being sent:', cleanedData)
+    logger.debug('Cleaned data being sent:', cleanedData)
     
   const res = await api.post('/companies', cleanedData)
     return res.data.company
   } catch (err) {
-    console.error('❌ Error creating company:', err)
+    logger.error('Error creating company:', err)
     throw err
   }
 }
 
 export async function updateCompanyGeneral(generalData) {
   try {
-
-    const transformedData = {
-      name: generalData.nom_entreprise,
-      sector: generalData.secteur,
-      description: generalData.description
-    }
+    const transformedData = transformCompanyGeneralData(generalData)
     
   const res = await api.put('/companies/general', transformedData)
     return res.data
   } catch (err) {
-    console.error('❌ Error updating company general info:', err)
+    logger.error('Error updating company general info:', err)
     throw err
   }
 }
@@ -133,7 +136,7 @@ export async function getProductions() {
     if (err?.response?.status === 404) {
       return [] // pas encore de productions
     }
-    console.error('❌ Error fetching productions:', err)
+    logger.error('Error fetching productions:', err)
     throw err
   }
 }
@@ -150,20 +153,13 @@ export async function getProductions() {
  */
 export async function addProduction(productionData) {
   try {
-    // Transform frontend field names to backend expected names
-    const transformedData = {
-      name: productionData.name,
-      category: productionData.category,
-      unit_measure: productionData.quantity || productionData.unit_measure,
-      description: productionData.description,
-      status: productionData.status || "active"
-    }
+    const transformedData = transformResourceData(productionData, 'production')
     
   const res = await api.post('/companies/productions', transformedData)
     // Backend returns: { message: "...", production: {...} }
     return res.data.production
   } catch (err) {
-    console.error('❌ Error adding production:', err)
+    logger.error('Error adding production:', err)
     throw err
   }
 }
@@ -176,20 +172,13 @@ export async function addProduction(productionData) {
  */
 export async function updateProduction(id, productionData) {
   try {
-    // Transform frontend field names to backend expected names
-    const transformedData = {
-      name: productionData.name,
-      category: productionData.category,
-      unit_measure: productionData.quantity || productionData.unit_measure,
-      description: productionData.description,
-      status: productionData.status || "active"
-    }
+    const transformedData = transformResourceData(productionData, 'production')
     
   const res = await api.put(`/companies/productions/${id}`, transformedData)
     // Backend returns: { message: "...", production: {...} }
     return res.data.production
   } catch (err) {
-    console.error('❌ Error updating production:', err)
+    logger.error('Error updating production:', err)
     throw err
   }
 }
@@ -204,7 +193,7 @@ export async function deleteProduction(id) {
   const res = await api.delete(`/companies/productions/${id}`)
     return res.data
   } catch (err) {
-    console.error('❌ Error deleting production:', err)
+    logger.error('Error deleting production:', err)
     throw err
   }
 }
@@ -225,7 +214,7 @@ export async function getBesoins() {
     if (err?.response?.status === 404) {
       return [] // pas encore de besoins
     }
-    console.error('❌ Error fetching besoins:', err)
+    logger.error('Error fetching besoins:', err)
     throw err
   }
 }
@@ -242,20 +231,13 @@ export async function getBesoins() {
  */
 export async function addBesoin(besoinData) {
   try {
-    // Transform frontend field names to backend expected names
-    const transformedData = {
-      name: besoinData.name,
-      category: besoinData.category,
-      unit_measure: besoinData.quantity || besoinData.unit_measure,
-      description: besoinData.description,
-      status: besoinData.status || "active"
-    }
+    const transformedData = transformResourceData(besoinData, 'besoin')
     
   const res = await api.post('/companies/besoins', transformedData)
     // Backend returns: { message: "...", besoin: {...} }
     return res.data.besoin
   } catch (err) {
-    console.error('❌ Error adding besoin:', err)
+    logger.error('Error adding besoin:', err)
     throw err
   }
 }
@@ -268,20 +250,13 @@ export async function addBesoin(besoinData) {
  */
 export async function updateBesoin(id, besoinData) {
   try {
-    // Transform frontend field names to backend expected names
-    const transformedData = {
-      name: besoinData.name,
-      category: besoinData.category,
-      unit_measure: besoinData.quantity || besoinData.unit_measure,
-      description: besoinData.description,
-      status: besoinData.status || "active"
-    }
+    const transformedData = transformResourceData(besoinData, 'besoin')
     
   const res = await api.put(`/companies/besoins/${id}`, transformedData)
     // Backend returns: { message: "...", besoin: {...} }
     return res.data.besoin
   } catch (err) {
-    console.error('❌ Error updating besoin:', err)
+    logger.error('Error updating besoin:', err)
     throw err
   }
 }
@@ -296,7 +271,7 @@ export async function deleteBesoin(id) {
   const res = await api.delete(`/companies/besoins/${id}`)
     return res.data
   } catch (err) {
-    console.error('❌ Error deleting besoin:', err)
+    logger.error('Error deleting besoin:', err)
     throw err
   }
 }
@@ -317,7 +292,7 @@ export async function getDechets() {
     if (err?.response?.status === 404) {
       return [] // pas encore de déchets
     }
-    console.error('❌ Error fetching dechets:', err)
+    logger.error('Error fetching dechets:', err)
     throw err
   }
 }
@@ -335,21 +310,13 @@ export async function getDechets() {
  */
 export async function addDechet(dechetData) {
   try {
-    // Transform frontend field names to backend expected names
-    const transformedData = {
-      name: dechetData.name,
-      category: dechetData.category,
-      unit_measure: dechetData.quantity || dechetData.unit_measure,
-      description: dechetData.description,
-      is_been: dechetData.traitement !== undefined ? dechetData.traitement : true,
-      status: dechetData.status || "active"
-    }
+    const transformedData = transformResourceData(dechetData, 'dechet')
     
   const res = await api.post('/companies/dechets', transformedData)
     // Backend returns: { message: "...", dechet: {...} }
     return res.data.dechet
   } catch (err) {
-    console.error('❌ Error adding dechet:', err)
+    logger.error('Error adding dechet:', err)
     throw err
   }
 }
@@ -362,21 +329,13 @@ export async function addDechet(dechetData) {
  */
 export async function updateDechet(id, dechetData) {
   try {
-    // Transform frontend field names to backend expected names
-    const transformedData = {
-      name: dechetData.name,
-      category: dechetData.category,
-      unit_measure: dechetData.quantity || dechetData.unit_measure,
-      description: dechetData.description,
-      is_been: dechetData.traitement !== undefined ? dechetData.traitement : true,
-      status: dechetData.status || "active"
-    }
+    const transformedData = transformResourceData(dechetData, 'dechet')
     
   const res = await api.put(`/companies/dechets/${id}`, transformedData)
     // Backend returns: { message: "...", dechet: {...} }
     return res.data.dechet
   } catch (err) {
-    console.error('❌ Error updating dechet:', err)
+    logger.error('Error updating dechet:', err)
     throw err
   }
 }
@@ -391,7 +350,7 @@ export async function deleteDechet(id) {
   const res = await api.delete(`/companies/dechets/${id}`)
     return res.data
   } catch (err) {
-    console.error('❌ Error deleting dechet:', err)
+    logger.error('Error deleting dechet:', err)
     throw err
   }
 }
@@ -410,18 +369,13 @@ export async function deleteDechet(id) {
  */
 export async function updateGeolocation(geoData) {
   try {
-    // Backend expects: { address, latitude, longitude }
-    const transformedData = {
-      address: geoData.address,
-      latitude: geoData.latitude,
-      longitude: geoData.longitude
-    }
+    const transformedData = transformGeolocationData(geoData)
     
   const res = await api.put('/companies/geolocation', transformedData)
     // Backend returns: { message: "...", geolocation: {...} }
     return res.data.geolocation
   } catch (err) {
-    console.error('❌ Error updating geolocation:', err)
+    logger.error('Error updating geolocation:', err)
     throw err
   }
 }
@@ -438,7 +392,7 @@ export async function getGeolocation() {
     if (err?.response?.status === 404) {
       return null // pas encore de géolocalisation
     }
-    console.error('❌ Error fetching geolocation:', err)
+    logger.error('Error fetching geolocation:', err)
     throw err
   }
 }

@@ -4,7 +4,7 @@ import { CheckCircle2, Bookmark, Package, Search, Clock } from 'lucide-react'
 
 function getCompatibilityStyles(compatibility = 0) {
   if (compatibility >= 70) {
-    return 'bg-green-100 text-green-700 border-green-200'
+    return 'bg-emerald-100 text-emerald-700 border-emerald-200'
   }
   if (compatibility >= 40) {
     return 'bg-amber-100 text-amber-700 border-amber-200'
@@ -72,7 +72,7 @@ function SuggestionReasons({ reasons }) {
       <ul className="space-y-2">
         {reasons.map((reason, idx) => (
           <li key={idx} className="flex items-start gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" />
             <span className="text-sm text-slate-700">{reason}</span>
           </li>
         ))}
@@ -105,22 +105,26 @@ function SuggestionDescription({ description, tags }) {
 }
 
 function SuggestionOfferDemand({ offer, demand }) {
-  if (!offer || !demand) return null
+  if (!offer && !demand) return null
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-      <OfferDemandColumn
-        icon={<Package className="h-4 w-4 text-green-700" />}
-        label={offer.label}
-        items={offer.items}
-        iconContainerClass="bg-green-100"
-      />
-      <OfferDemandColumn
-        icon={<Search className="h-4 w-4 text-blue-700" />}
-        label={demand.label}
-        items={demand.items}
-        iconContainerClass="bg-blue-100"
-      />
+      {offer && (
+        <OfferDemandColumn
+          icon={<Package className="h-4 w-4 text-emerald-700" />}
+          label={offer.label}
+          items={offer.items}
+          iconContainerClass="bg-emerald-100"
+        />
+      )}
+      {demand && (
+        <OfferDemandColumn
+          icon={<Search className="h-4 w-4 text-blue-700" />}
+          label={demand.label}
+          items={demand.items}
+          iconContainerClass="bg-blue-100"
+        />
+      )}
     </div>
   )
 }

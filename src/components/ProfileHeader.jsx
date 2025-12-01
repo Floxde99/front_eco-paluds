@@ -128,8 +128,8 @@ export function ProfileHeader() {
   if (!user) {
     return (
       <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-gray-300 rounded-full animate-pulse"></div>
-        <span className="text-sm font-medium text-gray-400">Chargement...</span>
+        <div className="w-8 h-8 bg-slate-300 rounded-full animate-pulse"></div>
+        <span className="text-sm font-medium text-slate-400">Chargement...</span>
       </div>
     )
   }
@@ -144,8 +144,8 @@ export function ProfileHeader() {
           title="Cliquer pour changer l'avatar"
         >
           {avatarLoading ? (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-full h-full bg-slate-200 flex items-center justify-center">
+              <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : avatarBlobUrl ? (
             <img
@@ -179,11 +179,11 @@ export function ProfileHeader() {
         />
       </div>
       
-      <span className="text-sm font-medium text-gray-700">
+      <span className="text-sm font-medium text-slate-700">
         {getDisplayName()}
       </span>
       
-      <div className="w-4 h-4 text-gray-400 cursor-pointer">
+      <div className="w-4 h-4 text-slate-400 cursor-pointer">
         ⌄
       </div>
     </div>

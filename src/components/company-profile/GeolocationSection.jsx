@@ -74,12 +74,12 @@ export function GeolocationSection({
   return (
     <section>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
+        <h2 className="text-xl font-semibold text-slate-900 flex items-center space-x-2">
           <MapPin className="h-5 w-5" />
           <span>Géolocalisation</span>
         </h2>
         <Button
-          className="bg-green-600 hover:bg-green-700"
+          className="bg-emerald-600 hover:bg-emerald-700"
           onClick={handleOpenDialog}
           disabled={!onSave || isSaving}
         >

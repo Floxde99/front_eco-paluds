@@ -4,7 +4,7 @@ import { toast as sonner } from 'sonner'
 export function success(message, opts = {}) {
   return sonner.success(message, {
     className:
-      "bg-green-50 text-green-900 border border-green-200 shadow-green-100 rounded-lg px-4 py-2",
+      "bg-emerald-50 text-emerald-900 border border-emerald-200 shadow-emerald-100 rounded-lg px-4 py-2",
     icon: '✅',
     ...opts,
   })

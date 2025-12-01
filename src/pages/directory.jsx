@@ -4,41 +4,52 @@ import { Building2, Heart, List, Loader2, Map as MapIcon, Search, SlidersHorizon
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import InteractiveMap from '@/components/Map'
 import api from '@/services/Api'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { PAGINATION, MAP_CONFIG } from '@/config/constants'
 
-const DEFAULT_MAX_DISTANCE = 15
-const DEFAULT_PAGE_SIZE = 12
+const DEFAULT_MAX_DISTANCE = PAGINATION?.DEFAULT_MAX_DISTANCE ?? 15
+const DEFAULT_PAGE_SIZE = PAGINATION?.DEFAULT_PAGE_SIZE ?? 12
+const MIN_DISTANCE = PAGINATION?.MIN_DISTANCE ?? 1
+const MAX_DISTANCE = PAGINATION?.MAX_DISTANCE ?? 50
+const MAP_DEFAULT_CENTER = MAP_CONFIG?.DEFAULT_CENTER ?? [43.294, 5.58]
+const MAP_DEFAULT_ZOOM = MAP_CONFIG?.DEFAULT_ZOOM ?? 12
+const MAP_DEFAULT_HEIGHT = MAP_CONFIG?.DEFAULT_HEIGHT ?? 440
+
+const normalizeValue = (value) => String(value ?? '').trim()
 
 const TAG_STYLES = {
-  Plastiques: 'bg-emerald-100 text-emerald-700',
-  Recyclage: 'bg-amber-100 text-amber-700',
-  Organique: 'bg-lime-100 text-lime-700',
-  Compostage: 'bg-violet-100 text-violet-700',
-  'Économie circulaire': 'bg-sky-100 text-sky-700',
+  Plastiques: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100',
+  Recyclage: 'bg-amber-50 text-amber-700 ring-1 ring-amber-100',
+  Organique: 'bg-lime-50 text-lime-700 ring-1 ring-lime-100',
+  Compostage: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100',
+  'Économie circulaire': 'bg-sky-50 text-sky-700 ring-1 ring-sky-100',
 }
 
 function Tag({ label }) {
-  const classes = TAG_STYLES[label] || 'bg-slate-100 text-slate-600'
+  const classes = TAG_STYLES[label] || 'bg-slate-100 text-slate-700 ring-1 ring-slate-200'
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${classes}`}>
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${classes}`}>
       {label}
     </span>
   )
 }
 
 function DirectoryCard({ company, onOpenProfile }) {
-  const distanceValue = typeof company.distance === 'number'
-    ? company.distance.toFixed(1)
-    : company.distance
+  const distanceValue =
+    typeof company.distance === 'number'
+      ? `${company.distance.toFixed(1)} km`
+      : company.distance || 'Distance à confirmer'
   const sectorLabel = company.sector ?? 'Secteur non renseigné'
   const tags = Array.isArray(company.tags) ? company.tags : []
+  const description = company.description?.trim() || 'Profil en attente de description.'
+  const offer = company.offer
+  const demand = company.demand
 
   return (
     <Card
-      className="border border-slate-200 shadow-sm transition hover:border-blue-200 hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400"
+      className="group relative overflow-hidden border border-slate-200 bg-white/90 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/30"
       role="button"
       tabIndex={0}
       onClick={() => onOpenProfile?.(company)}
@@ -49,45 +60,65 @@ function DirectoryCard({ company, onOpenProfile }) {
         }
       }}
     >
-      <CardContent className="p-6 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">{company.name}</h3>
-            <p className="text-sm text-slate-600">{company.description}</p>
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 via-sky-400 to-cyan-400" />
+      <CardContent className="p-6 space-y-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+              <Building2 className="h-4 w-4" />
+              <span>{sectorLabel}</span>
+            </div>
+            <h3 className="text-xl font-semibold text-slate-900">{company.name}</h3>
+            <p className="text-sm text-slate-600">{description}</p>
           </div>
           <div className="flex flex-col items-end gap-3">
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">
-              {distanceValue} km
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+              {distanceValue}
             </span>
             <Button
               type="button"
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700"
+              variant="outline"
+              className="border-slate-200 bg-white text-slate-700 shadow-none hover:border-blue-200 hover:text-blue-700"
               onClick={(event) => {
                 event.stopPropagation()
-                // TODO: branch to contact flow when API ready
+                onOpenProfile?.(company)
               }}
             >
-              Contacter
+              Voir la fiche
             </Button>
           </div>
         </div>
 
+        {(offer || demand) && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {offer && (
+              <div className="rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Propose</p>
+                <p className="text-sm text-slate-700">{offer}</p>
+              </div>
+            )}
+            {demand && (
+              <div className="rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Recherche</p>
+                <p className="text-sm text-slate-700">{demand}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Tag key={tag} label={tag} />
-          ))}
+          {tags.length ? (
+            tags.map((tag) => <Tag key={tag} label={tag} />)
+          ) : (
+            <span className="text-xs text-slate-400">Aucun tag communiqué.</span>
+          )}
         </div>
 
-        <div className="text-sm text-slate-600 space-y-1">
-          {company.offer && <p>{company.offer}</p>}
-          {company.demand && <p>{company.demand}</p>}
-        </div>
-
-        <div className="flex items-center justify-between text-xs text-slate-400">
-          <div className="inline-flex items-center gap-1">
-            <Building2 className="h-3.5 w-3.5" />
-            <span>{sectorLabel}</span>
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <div className="inline-flex items-center gap-1.5">
+            <MapIcon className="h-4 w-4" />
+            <span>Consultez la fiche pour les coordonnées</span>
           </div>
           <button
             type="button"
@@ -130,15 +161,17 @@ export default function DirectoryPage() {
   const wastesTouchedRef = useRef(false)
 
   const toggleSelection = (value, setState, touchedRef) => {
+    if (!value) return
     if (touchedRef?.current === false) {
       touchedRef.current = true
     }
+    const normalized = normalizeValue(value)
     setState((prev) => {
       const next = new Set(prev)
-      if (next.has(value)) {
-        next.delete(value)
+      if (next.has(normalized)) {
+        next.delete(normalized)
       } else {
-        next.add(value)
+        next.add(normalized)
       }
       return next
     })
@@ -148,10 +181,12 @@ export default function DirectoryPage() {
     const sectorsArray = Array.from(appliedSectors)
     const wasteArray = Array.from(appliedWasteTypes)
 
-    const sectorsParam =
-      sectorsDirty && sectorsArray.length ? [...sectorsArray].sort().join(',') : undefined
-    const wastesParam =
-      wastesDirty && wasteArray.length ? [...wasteArray].sort().join(',') : undefined
+    const sectorsParam = sectorsArray.length
+      ? [...sectorsArray].sort().join(',')
+      : (sectorsDirty ? '__none' : undefined)
+    const wastesParam = wasteArray.length
+      ? [...wasteArray].sort().join(',')
+      : (wastesDirty ? '__none' : undefined)
 
     return {
       search: appliedSearchTerm.trim(),
@@ -185,31 +220,19 @@ export default function DirectoryPage() {
   const wasteOptions = useMemo(() => normalizeFacetEntries(facetWasteTypes), [facetWasteTypes])
 
   useEffect(() => {
-    const optionValues = sectorOptions.map((option) => option.value)
+    const optionValues = sectorOptions.map((option) => normalizeValue(option.value))
+    if (!optionValues.length) {
+      return
+    }
+
     const defaultSet = new Set(optionValues)
 
     if (!sectorsTouchedRef.current) {
       defaultSectorValuesRef.current = defaultSet
     }
 
-    if (!optionValues.length) {
-      sectorsTouchedRef.current = false
-      defaultSectorValuesRef.current = defaultSet
-      if (pendingSectors.size) {
-        setPendingSectors(new Set())
-      }
-      if (appliedSectors.size) {
-        setAppliedSectors(new Set())
-        setPage(1)
-      }
-      if (sectorsDirty) {
-        setSectorsDirty(false)
-      }
-      return
-    }
-
     const sanitizeSelection = (selection) =>
-      new Set([...selection].filter((value) => defaultSet.has(value)))
+      new Set([...selection].map(normalizeValue).filter((value) => defaultSet.has(value)))
 
     let nextPending = pendingSectors
     let nextApplied = appliedSectors
@@ -255,31 +278,19 @@ export default function DirectoryPage() {
   }, [sectorOptions, pendingSectors, appliedSectors, sectorsDirty])
 
   useEffect(() => {
-    const optionValues = wasteOptions.map((option) => option.value)
+    const optionValues = wasteOptions.map((option) => normalizeValue(option.value))
+    if (!optionValues.length) {
+      return
+    }
+
     const defaultSet = new Set(optionValues)
 
     if (!wastesTouchedRef.current) {
       defaultWasteValuesRef.current = defaultSet
     }
 
-    if (!optionValues.length) {
-      wastesTouchedRef.current = false
-      defaultWasteValuesRef.current = defaultSet
-      if (pendingWasteTypes.size) {
-        setPendingWasteTypes(new Set())
-      }
-      if (appliedWasteTypes.size) {
-        setAppliedWasteTypes(new Set())
-        setPage(1)
-      }
-      if (wastesDirty) {
-        setWastesDirty(false)
-      }
-      return
-    }
-
     const sanitizeSelection = (selection) =>
-      new Set([...selection].filter((value) => defaultSet.has(value)))
+      new Set([...selection].map(normalizeValue).filter((value) => defaultSet.has(value)))
 
     let nextPending = pendingWasteTypes
     let nextApplied = appliedWasteTypes
@@ -366,7 +377,17 @@ export default function DirectoryPage() {
     return counts
   }, [wasteOptions])
 
-  const distanceLabel = `${pendingMaxDistance} km`
+  const pendingDistanceLabel = `${pendingMaxDistance} km`
+  const appliedDistanceLabel = `${appliedMaxDistance} km`
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0
+    if (appliedSearchTerm.trim()) count += 1
+    if (appliedSectors.size) count += appliedSectors.size
+    if (appliedWasteTypes.size) count += appliedWasteTypes.size
+    if (appliedMaxDistance !== DEFAULT_MAX_DISTANCE) count += 1
+    return count
+  }, [appliedSearchTerm, appliedSectors, appliedWasteTypes, appliedMaxDistance])
 
   const handleApply = () => {
     const nextAppliedSectors = new Set(pendingSectors)
@@ -448,219 +469,307 @@ export default function DirectoryPage() {
       company?.id
     if (!targetId) return
     navigate(
-  { pathname: `/companies/${targetId}` },
+      { pathname: `/companies/${targetId}` },
       { state: { directoryCompany: company } }
     )
   }, [navigate])
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr]">
-        <aside>
-          <Card className="border border-slate-200 shadow-sm">
-            <CardContent className="p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-blue-900 to-blue-700 text-white shadow-xl">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_35%)]" />
+          <div className="relative flex flex-col gap-6 p-8">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="space-y-2">
-                <h2 className="text-lg font-semibold text-slate-900">Rechercher</h2>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    value={pendingSearchTerm}
-                    onChange={(event) => setPendingSearchTerm(event.target.value)}
-                    placeholder="Nom d'entreprise, produit..."
-                    className="pl-9"
-                  />
-                </div>
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">Annuaire des entreprises</p>
+                <h1 className="text-3xl font-semibold leading-tight">{totalCompanies} entreprises trouvées</h1>
+                <p className="text-sm text-white/80">
+                  Explorez le réseau industriel des Paluds et identifiez vos futurs partenaires de proximité.
+                </p>
               </div>
-
-              <Separator />
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold uppercase tracking-wide">
-                  <SlidersHorizontal className="h-4 w-4" />
-                  <span>Filtres</span>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Secteur d'activité</p>
-                    <ul className="mt-2 space-y-2">
-                      {sectorOptions.map((sector) => (
-                        <li key={sector.value} className="flex items-center justify-between gap-2 text-sm text-slate-600">
-                          <label className="inline-flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                              checked={pendingSectors.has(sector.value)}
-                              onChange={() =>
-                                toggleSelection(
-                                  sector.value,
-                                  setPendingSectors,
-                                  sectorsTouchedRef
-                                )
-                              }
-                              disabled={filterDisabled}
-                            />
-                            <span>{sector.label}</span>
-                          </label>
-                          <span className="text-xs text-slate-400">{sectorCounts[sector.value] ?? 0}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Type de déchet</p>
-                    <ul className="mt-2 space-y-2">
-                      {wasteOptions.map((waste) => (
-                        <li key={waste.value} className="flex items-center justify-between gap-2 text-sm text-slate-600">
-                          <label className="inline-flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                              checked={pendingWasteTypes.has(waste.value)}
-                              onChange={() =>
-                                toggleSelection(
-                                  waste.value,
-                                  setPendingWasteTypes,
-                                  wastesTouchedRef
-                                )
-                              }
-                              disabled={filterDisabled}
-                            />
-                            <span>{waste.label}</span>
-                          </label>
-                          <span className="text-xs text-slate-400">{wasteCounts[waste.value] ?? 0}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Distance maximale</p>
-                  <div>
-                    <input
-                      type="range"
-                      min="1"
-                      max="50"
-                      step="1"
-                      value={pendingMaxDistance}
-                      onChange={(event) => setPendingMaxDistance(Number(event.target.value))}
-                      className="w-full accent-blue-600"
-                    />
-                    <div className="flex justify-between text-xs text-slate-400">
-                      <span>0 km</span>
-                      <span>{distanceLabel}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between gap-3">
-                <Button type="button" variant="outline" className="border-slate-200 text-slate-500" onClick={handleReset}>
-                  Effacer
+              <div className="inline-flex items-center rounded-full bg-white/10 p-1 text-white shadow-inner ring-1 ring-white/20">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={`h-10 rounded-full px-4 text-sm font-semibold ${viewMode === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'hover:bg-white/20 text-white'}`}
+                  onClick={() => handleChangeView('list')}
+                  aria-label="Vue liste"
+                >
+                  <List className={`h-5 w-5 ${viewMode === 'list' ? 'text-slate-900' : 'text-white'}`} />
+                  <span className="hidden sm:inline">Liste</span>
                 </Button>
                 <Button
                   type="button"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  onClick={handleApply}
-                  disabled={isFetching}
+                  variant="ghost"
+                  className={`h-10 rounded-full px-4 text-sm font-semibold ${viewMode === 'map' ? 'bg-white text-slate-900 shadow-sm' : 'hover:bg-white/20 text-white'}`}
+                  onClick={() => handleChangeView('map')}
+                  aria-label="Vue carte"
                 >
-                  Appliquer
+                  <MapIcon className={`h-5 w-5 ${viewMode === 'map' ? 'text-slate-900' : 'text-white'}`} />
+                  <span className="hidden sm:inline">Carte</span>
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </aside>
-
-        <section className="space-y-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-blue-600">
-                Annuaire des entreprises
-              </p>
-              <h1 className="text-2xl font-bold text-slate-900">{totalCompanies} entreprises trouvées</h1>
-              <p className="text-sm text-slate-500">
-                Explorez le réseau industriel des Paluds et trouvez des partenaires près de chez vous.
-              </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl bg-white/10 p-4 backdrop-blur ring-1 ring-white/15">
+                <p className="text-[11px] uppercase tracking-wide text-white/70">Rayon appliqué</p>
+                <p className="text-lg font-semibold text-white">{appliedDistanceLabel}</p>
+                <p className="text-xs text-white/60">Ajustez-le depuis le panneau filtres.</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4 backdrop-blur ring-1 ring-white/15">
+                <p className="text-[11px] uppercase tracking-wide text-white/70">Filtres actifs</p>
+                <p className="text-lg font-semibold text-white">{activeFiltersCount}</p>
+                <p className="text-xs text-white/60">Recherche, secteurs et types de déchets.</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4 backdrop-blur ring-1 ring-white/15">
+                <p className="text-[11px] uppercase tracking-wide text-white/70">Statut</p>
+                <p className="text-lg font-semibold text-white">{isFetching ? 'Actualisation...' : 'À jour'}</p>
+                <p className="text-xs text-white/60">Données rafraîchies toutes les minutes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-xl">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={pendingSearchTerm}
+                onChange={(event) => setPendingSearchTerm(event.target.value)}
+                placeholder="Rechercher par nom, produit ou besoin"
+                className="w-full rounded-lg border-slate-200 bg-white pl-10 text-slate-900 shadow-none focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                className={`h-10 w-10 p-0 ${viewMode === 'list' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                onClick={() => handleChangeView('list')}
-                aria-label="Vue liste"
+                variant="outline"
+                className="h-10 rounded-lg border-slate-200 text-slate-600 hover:border-slate-300"
+                onClick={handleReset}
               >
-                <List className={`h-5 w-5 ${viewMode === 'list' ? 'text-white' : 'text-slate-500'}`} />
+                Réinitialiser
               </Button>
               <Button
                 type="button"
-                variant={viewMode === 'map' ? 'default' : 'outline'}
-                className={`h-10 w-10 p-0 ${viewMode === 'map' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                onClick={() => handleChangeView('map')}
-                aria-label="Vue carte"
+                className="h-10 rounded-lg bg-slate-900 px-4 text-white hover:bg-slate-800"
+                onClick={handleApply}
+                disabled={isFetching}
               >
-                <MapIcon className={`h-5 w-5 ${viewMode === 'map' ? 'text-white' : 'text-slate-500'}`} />
+                Appliquer les filtres
               </Button>
             </div>
           </div>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Rayon : {pendingDistanceLabel}
+            </span>
+            {!!pendingSectors.size && (
+              <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 font-medium text-blue-700 ring-1 ring-blue-100">
+                {pendingSectors.size} secteur{pendingSectors.size > 1 ? 's' : ''} sélectionné{pendingSectors.size > 1 ? 's' : ''}
+              </span>
+            )}
+            {!!pendingWasteTypes.size && (
+              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700 ring-1 ring-emerald-100">
+                {pendingWasteTypes.size} type{pendingWasteTypes.size > 1 ? 's' : ''} de déchet
+              </span>
+            )}
+            {pendingSearchTerm.trim() && (
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
+                <Search className="h-3.5 w-3.5" />
+                "{pendingSearchTerm.trim()}"
+              </span>
+            )}
+          </div>
+        </div>
 
-          {isError ? (
-            <Card className="border border-slate-200 shadow-sm">
-              <CardContent className="p-10 text-center space-y-3">
-                <p className="text-lg font-semibold text-slate-900">Erreur lors du chargement</p>
-                <p className="text-sm text-slate-500">
-                  {error?.message ?? "Impossible de récupérer l'annuaire pour le moment."}
-                </p>
-                <Button type="button" variant="outline" onClick={() => refetch()} disabled={isFetching}>
-                  Réessayer
-                </Button>
-              </CardContent>
-            </Card>
-          ) : viewMode === 'map' ? (
-            <Card className="border border-slate-200 shadow-sm">
-              <CardContent className="p-0">
-                <InteractiveMap
-                  className="h-[420px] w-full rounded-xl"
-                  center={[43.294, 5.58]}
-                  zoom={12}
-                  markers={markers}
-                />
-              </CardContent>
-            </Card>
-          ) : isEmptyState ? (
-            <Card className="border border-slate-200 shadow-sm">
-              <CardContent className="p-10 text-center space-y-3">
-                <p className="text-lg font-semibold text-slate-900">Aucune entreprise trouvée</p>
-                <p className="text-sm text-slate-500">
-                  Ajustez vos filtres ou élargissez le rayon de recherche pour découvrir de nouveaux partenaires.
-                </p>
-                <Button type="button" variant="outline" onClick={handleReset}>
-                  Réinitialiser les filtres
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {companies.map((company) => (
-                <DirectoryCard
-                  key={company.id ?? company.name}
-                  company={company}
-                  onOpenProfile={handleOpenProfile}
-                />
-              ))}
-              {isFetching && (
-                <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Mise à jour des résultats…
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
+          <aside className="lg:sticky lg:top-6">
+            <Card className="border-none bg-white/90 shadow-lg ring-1 ring-slate-200">
+              <CardContent className="p-6 space-y-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Filtres avancés</p>
+                    <p className="text-base font-semibold text-slate-900">Affinez votre recherche</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-9 rounded-full px-3 text-slate-500 hover:bg-slate-100"
+                    onClick={handleReset}
+                  >
+                    Tout effacer
+                  </Button>
                 </div>
-              )}
-            </div>
-          )}
-        </section>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Secteur d'activité</p>
+                    <ul className="space-y-2">
+                      {sectorOptions.map((sector) => {
+                        const normalized = normalizeValue(sector.value)
+                        return (
+                          <li
+                            key={normalized}
+                            className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 text-sm text-slate-700 shadow-[0_1px_0_rgba(15,23,42,0.04)]"
+                          >
+                            <label className="inline-flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                checked={pendingSectors.has(normalized)}
+                                onChange={() =>
+                                  toggleSelection(
+                                    normalized,
+                                    setPendingSectors,
+                                    sectorsTouchedRef
+                                  )
+                                }
+                                disabled={filterDisabled}
+                              />
+                              <span>{sector.label}</span>
+                            </label>
+                            <span className="text-xs font-semibold text-slate-500">{sectorCounts[sector.value] ?? 0}</span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Type de déchet</p>
+                    <ul className="space-y-2">
+                      {wasteOptions.map((waste) => {
+                        const normalized = normalizeValue(waste.value)
+                        return (
+                          <li
+                            key={normalized}
+                            className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 text-sm text-slate-700 shadow-[0_1px_0_rgba(15,23,42,0.04)]"
+                          >
+                            <label className="inline-flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                checked={pendingWasteTypes.has(normalized)}
+                                onChange={() =>
+                                  toggleSelection(
+                                    normalized,
+                                    setPendingWasteTypes,
+                                    wastesTouchedRef
+                                  )
+                                }
+                                disabled={filterDisabled}
+                              />
+                              <span>{waste.label}</span>
+                            </label>
+                            <span className="text-xs font-semibold text-slate-500">{wasteCounts[waste.value] ?? 0}</span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                    <span>Distance maximale</span>
+                    <span className="text-xs text-slate-500">{pendingDistanceLabel}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={MIN_DISTANCE}
+                    max={MAX_DISTANCE}
+                    step={1}
+                    value={pendingMaxDistance}
+                    onChange={(event) => setPendingMaxDistance(Number(event.target.value))}
+                    className="mt-3 w-full accent-slate-900"
+                  />
+                  <div className="mt-1 flex justify-between text-[11px] uppercase tracking-wide text-slate-400">
+                    <span>{MIN_DISTANCE} km</span>
+                    <span>{MAX_DISTANCE} km</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 rounded-lg border-slate-200 text-slate-600"
+                    onClick={handleReset}
+                  >
+                    Effacer
+                  </Button>
+                  <Button
+                    type="button"
+                    className="h-10 flex-1 rounded-lg bg-slate-900 text-white hover:bg-slate-800"
+                    onClick={handleApply}
+                    disabled={isFetching}
+                  >
+                    Appliquer
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
+
+          <section className="space-y-6">
+            {isError ? (
+              <Card className="border-none bg-white/90 shadow-lg ring-1 ring-red-100">
+                <CardContent className="space-y-3 p-10 text-center">
+                  <p className="text-lg font-semibold text-slate-900">Erreur lors du chargement</p>
+                  <p className="text-sm text-slate-500">
+                    {error?.message ?? "Impossible de récupérer l'annuaire pour le moment."}
+                  </p>
+                  <Button type="button" variant="outline" onClick={() => refetch()} disabled={isFetching}>
+                    Réessayer
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : viewMode === 'map' ? (
+              <Card className="overflow-hidden border-none bg-white shadow-lg ring-1 ring-slate-200">
+                <CardContent className="p-0">
+                  <InteractiveMap
+                    className="h-[440px] w-full"
+                    style={{ height: MAP_DEFAULT_HEIGHT }}
+                    center={MAP_DEFAULT_CENTER}
+                    zoom={MAP_DEFAULT_ZOOM}
+                    markers={markers}
+                  />
+                </CardContent>
+              </Card>
+            ) : isEmptyState ? (
+              <Card className="border-none bg-white/90 shadow-lg ring-1 ring-slate-200">
+                <CardContent className="space-y-3 p-10 text-center">
+                  <p className="text-lg font-semibold text-slate-900">Aucune entreprise trouvée</p>
+                  <p className="text-sm text-slate-500">
+                    Ajustez vos filtres ou élargissez le rayon de recherche pour découvrir de nouveaux partenaires.
+                  </p>
+                  <Button type="button" variant="outline" onClick={handleReset}>
+                    Réinitialiser les filtres
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {companies.map((company) => (
+                  <DirectoryCard
+                    key={company.id ?? company.name}
+                    company={company}
+                    onOpenProfile={handleOpenProfile}
+                  />
+                ))}
+                {isFetching && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Mise à jour des résultats...
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   )

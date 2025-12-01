@@ -16,7 +16,7 @@ export function ProfileCard() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-medium">Profil entreprise</CardTitle>
-            <div className="w-4 h-4 text-gray-400">✏️</div>
+            <div className="w-4 h-4 text-slate-400">✏️</div>
           </div>
         </CardHeader>
         <CardContent>
@@ -33,14 +33,14 @@ export function ProfileCard() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Profil entreprise</CardTitle>
-          <div className="w-4 h-4 text-gray-400">✏️</div>
+          <div className="w-4 h-4 text-slate-400">✏️</div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">Complétude :</span>
+              <span className="text-slate-600">Complétude :</span>
               <span className="font-medium">
                 {loading ? '...' : `${completion?.completion?.percentage || 0}%`}
               </span>
@@ -51,7 +51,7 @@ export function ProfileCard() {
             />
             {!loading && completion?.completion && (
               <div className="mt-2 space-y-1">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-slate-500">
                   {completion.completion.score || 0} / {completion.completion.total || 8} champs remplis
                 </p>
                 {completion.completion.missing?.company && (
@@ -100,15 +100,15 @@ export function SuggestionsCard() {
           <div>
             {loading ? (
               <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                <div className="h-4 bg-slate-200 rounded animate-pulse"></div>
+                <div className="h-3 bg-slate-200 rounded animate-pulse w-3/4"></div>
               </div>
             ) : (
               <>
-                <p className="text-green-600 font-semibold">
+                <p className="text-emerald-600 font-semibold">
                   {newCount} nouvelles opportunités
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-slate-500">
                   {totalCount} suggestions au total
                 </p>
               </>
@@ -117,7 +117,7 @@ export function SuggestionsCard() {
           <Button
             type="button"
             onClick={() => navigate('/suggestions')}
-            className="w-full bg-green-600 hover:bg-green-700"
+            className="w-full bg-emerald-600 hover:bg-emerald-700"
           >
             Voir les suggestions
           </Button>
@@ -140,7 +140,7 @@ export function NetworkCard() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Mon réseau</CardTitle>
-          <div className="w-4 h-4 text-gray-400">👥</div>
+          <div className="w-4 h-4 text-slate-400">👥</div>
         </div>
       </CardHeader>
       <CardContent>
@@ -148,15 +148,15 @@ export function NetworkCard() {
           <div>
             {loading ? (
               <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3"></div>
+                <div className="h-4 bg-slate-200 rounded animate-pulse"></div>
+                <div className="h-3 bg-slate-200 rounded animate-pulse w-2/3"></div>
               </div>
             ) : (
               <>
                 <p className="font-semibold">
                   {connectedCount} entreprises connectées
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-slate-500">
                   {partnershipsCount} partenariats actifs
                 </p>
               </>
@@ -187,19 +187,19 @@ export function ActivityCard() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Activité récente</CardTitle>
-          <div className="w-4 h-4 text-gray-400">📈</div>
+          <div className="w-4 h-4 text-slate-400">📈</div>
         </div>
       </CardHeader>
       <CardContent>
         {loading ? (
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
-              <div className="h-3 bg-gray-200 rounded animate-pulse flex-1"></div>
+              <div className="w-2 h-2 bg-slate-200 rounded-full"></div>
+              <div className="h-3 bg-slate-200 rounded animate-pulse flex-1"></div>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
-              <div className="h-3 bg-gray-200 rounded animate-pulse flex-1"></div>
+              <div className="w-2 h-2 bg-slate-200 rounded-full"></div>
+              <div className="h-3 bg-slate-200 rounded animate-pulse flex-1"></div>
             </div>
           </div>
         ) : activities.length > 0 ? (
@@ -208,15 +208,15 @@ export function ActivityCard() {
               <div key={activity.id || index} className="flex items-center space-x-2">
                 <div className={`w-2 h-2 rounded-full ${
                   activity.type === 'profile_update' ? 'bg-blue-500' : 
-                  activity.type === 'new_match' ? 'bg-green-500' : 
-                  'bg-gray-500'
+                  activity.type === 'new_match' ? 'bg-emerald-500' : 
+                  'bg-slate-500'
                 }`}></div>
                 <span className="text-sm">{activity.message}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-slate-500">
             Aucune activité récente
           </div>
         )}

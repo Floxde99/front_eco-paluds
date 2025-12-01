@@ -1,43 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { AuthContext } from '@/contexts/AuthContext'
-import { useCurrentUser } from '@/hooks/useAuthQuery'
+import { useCurrentUser, authKeys } from '@/hooks/useAuthQuery'
 import { queryClient } from '@/lib/queryClient'
+import { normalizeUser } from '@/lib/transformers'
 
-function normalizeUser(rawUser) {
-  if (!rawUser || typeof rawUser !== 'object') {
-    return null
-  }
-
-  const firstName =
-    rawUser.firstName ??
-    rawUser.prenom ??
-    rawUser.first_name ??
-    rawUser.given_name ??
-    ''
-
-  const lastName =
-    rawUser.lastName ??
-    rawUser.nom ??
-    rawUser.last_name ??
-    rawUser.family_name ??
-    ''
-
-  const email =
-    rawUser.email ??
-    rawUser.mail ??
-    rawUser.emailAddress ??
-    rawUser.user_email ??
-    undefined
-
-  return {
-    ...rawUser,
-    firstName,
-    lastName,
-    prenom: rawUser.prenom ?? firstName,
-    nom: rawUser.nom ?? lastName,
-    email: email ?? '',
-  }
-}
 
 // Auth Provider Component
 export function AuthProvider({ children }) {
@@ -45,38 +11,72 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Utiliser React Query pour r�cup�rer l'utilisateur (avec d�duplication)
-  const { data: userData, isLoading, error: queryError } = useCurrentUser()
+  // Utiliser React Query pour récupérer l'utilisateur (avec déduplication)
+  const { data: userData, isLoading, error: queryError, refetch } = useCurrentUser()
 
   useEffect(() => {
-    // Mettre � jour l'�tat local bas� sur les donn�es React Query
-    const normalizedUser = normalizeUser(userData?.user)
-    setUser(normalizedUser)
-    setLoading(isLoading)
+    // Vérifier si on a un token mais pas encore de données
+    const hasToken = !!localStorage.getItem('authToken')
+    
+    // Si on a un token et qu'on charge, rester en loading
+    // Si on n'a pas de token, ne pas être en loading
+    if (!hasToken) {
+      setLoading(false)
+      setUser(null)
+      return
+    }
+
+    // Mettre à jour l'état local basé sur les données React Query
+    if (!isLoading) {
+      const normalizedUser = normalizeUser(userData?.user)
+      setUser(normalizedUser)
+      setLoading(false)
+    }
+    
     setError(queryError)
 
     // Si le token est invalide, le supprimer
     if (queryError?.response?.status === 401 || queryError?.response?.status === 403) {
       localStorage.removeItem('authToken')
       queryClient.clear()
+      setUser(null)
+      setLoading(false)
     }
   }, [userData, isLoading, queryError])
 
-  const updateUser = (userData) => {
-    setUser(normalizeUser(userData))
-  }
+  // Fonction pour mettre à jour l'utilisateur après login
+  const updateUser = useCallback((userData) => {
+    const normalizedUser = normalizeUser(userData)
+    setUser(normalizedUser)
+    setLoading(false)
+    
+    // Mettre à jour le cache React Query avec les nouvelles données
+    queryClient.setQueryData(authKeys.user(), { user: userData })
+  }, [])
 
-  const logout = () => {
+  // Fonction pour rafraîchir les données utilisateur
+  const refreshUser = useCallback(async () => {
+    setLoading(true)
+    try {
+      await refetch()
+    } finally {
+      setLoading(false)
+    }
+  }, [refetch])
+
+  const logout = useCallback(() => {
     setUser(null)
+    setLoading(false)
     localStorage.removeItem('authToken')
     queryClient.clear()
-  }
+  }, [])
 
   const value = {
     user,
     loading,
     error,
     updateUser,
+    refreshUser,
     logout,
     isAuthenticated: !!user
   }

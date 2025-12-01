@@ -166,7 +166,7 @@ export function ResourceDialog({
                   <Label htmlFor={field.name}>{field.label}</Label>
                   <textarea
                     id={field.name}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
                     value={values[field.name] ?? ''}
                     onChange={(event) => handleChange(field.name, event.target.value)}
@@ -182,7 +182,7 @@ export function ResourceDialog({
                   <Label htmlFor={field.name}>{field.label}</Label>
                   <select
                     id={field.name}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={values[field.name] ?? ''}
                     onChange={(event) => handleChange(field.name, event.target.value)}
                     required={field.required}
@@ -203,7 +203,7 @@ export function ResourceDialog({
                   <input
                     id={field.name}
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-slate-300"
                     checked={Boolean(values[field.name])}
                     onChange={(event) => handleChange(field.name, event.target.checked)}
                   />

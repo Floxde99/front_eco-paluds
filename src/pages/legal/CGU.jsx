@@ -5,7 +5,7 @@ export default function CGU() {
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Conditions Générales d’Utilisation</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-6">Conditions Générales d'Utilisation</h1>
         <div className="prose prose-slate max-w-none">
           <p>
             Les présentes conditions ont pour objet d’encadrer l’accès et l’utilisation du service

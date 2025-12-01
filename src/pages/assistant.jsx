@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bot, CheckCircle2, ChevronRight, Headset, Loader2, MessageCircle, Send, Sparkles, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -82,7 +83,7 @@ function QuickActions({ templates, onSelect, disabled = false }) {
   )
 }
 
-function MessageContent({ segments }) {
+function MessageContent({ segments, onActionClick }) {
   if (!segments || segments.length === 0) {
     return <p className="text-sm text-slate-500">Message vide</p>
   }
@@ -90,6 +91,25 @@ function MessageContent({ segments }) {
   return (
     <div className="space-y-3">
       {segments.map((segment, idx) => {
+        if (segment.type === 'action') {
+          return (
+            <Button
+              key={idx}
+              size="sm"
+              variant="outline"
+              className="w-full justify-start gap-2 border-blue-200 text-blue-700 hover:border-blue-300 hover:bg-blue-50"
+              onClick={() => onActionClick?.(segment.route)}
+            >
+              <Sparkles className="h-4 w-4 text-blue-600" />
+              <div className="text-left">
+                <div className="text-sm font-semibold">{segment.label || 'Action'}</div>
+                {segment.description ? (
+                  <div className="text-xs text-slate-500">{segment.description}</div>
+                ) : null}
+              </div>
+            </Button>
+          )
+        }
         if (segment.type === 'link') {
           return (
             <a
@@ -129,9 +149,10 @@ function MessageContent({ segments }) {
   )
 }
 
-function MessageBubble({ message, userName = 'Vous' }) {
-  const isUser = message.role === 'user'
-  const isSystem = message.role === 'system'
+function MessageBubble({ message, userName = 'Vous', onActionClick }) {
+  const role = (message.role ?? '').toLowerCase()
+  const isUser = role === 'user' || role === 'me' || role === 'client' || role === 'owner'
+  const isSystem = role === 'system'
 
   if (isSystem) {
     return (
@@ -151,7 +172,7 @@ function MessageBubble({ message, userName = 'Vous' }) {
             <span className="font-semibold">{userName}</span>
             <span>{formatRelativeTime(message.createdAt)}</span>
           </div>
-          <MessageContent segments={message.content} />
+          <MessageContent segments={message.content} onActionClick={onActionClick} />
         </div>
       </div>
     )
@@ -167,7 +188,7 @@ function MessageBubble({ message, userName = 'Vous' }) {
           <span className="font-semibold text-slate-900">Assistant IA</span>
           <span className="text-xs text-slate-400">{formatRelativeTime(message.createdAt)}</span>
         </div>
-        <MessageContent segments={message.content} />
+        <MessageContent segments={message.content} onActionClick={onActionClick} />
       </div>
     </div>
   )
@@ -175,6 +196,7 @@ function MessageBubble({ message, userName = 'Vous' }) {
 
 
 export default function AssistantSupportPage() {
+  const navigate = useNavigate()
   const [currentConversationId, setCurrentConversationId] = useState(null)
   const [message, setMessage] = useState('')
   const [isPolling, setIsPolling] = useState(false)
@@ -199,6 +221,28 @@ export default function AssistantSupportPage() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const normalizedConversations = useMemo(() => {
+    const map = new Map()
+    ;(conversations ?? []).forEach((conv) => {
+      if (!conv?.id) return
+      const existing = map.get(conv.id)
+      const existingDate = existing?.lastMessageAt ? new Date(existing.lastMessageAt).getTime() : 0
+      const nextDate = conv?.lastMessageAt ? new Date(conv.lastMessageAt).getTime() : 0
+      if (!existing || nextDate >= existingDate) {
+        map.set(conv.id, conv)
+      }
+    })
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.lastMessageAt ?? 0).getTime() - new Date(a.lastMessageAt ?? 0).getTime()
+    )
+  }, [conversations])
+
+  useEffect(() => {
+    if (!currentConversationId && normalizedConversations.length) {
+      setCurrentConversationId(normalizedConversations[0].id)
+    }
+  }, [currentConversationId, normalizedConversations])
 
   useEffect(() => {
     return () => {
@@ -535,7 +579,7 @@ export default function AssistantSupportPage() {
                 <h3 className="text-sm font-semibold uppercase text-slate-500">Conversations récentes</h3>
                 <p className="text-xs text-slate-400">Reprenez là où vous vous êtes arrêté</p>
               </div>
-              <ConversationList conversations={conversations} onSelect={handleSelectConversation} />
+              <ConversationList conversations={normalizedConversations} onSelect={handleSelectConversation} />
             </div>
 
             <div className="space-y-4">
@@ -613,7 +657,12 @@ export default function AssistantSupportPage() {
                   )}
 
                   {messages.map((msg) => (
-                    <MessageBubble key={msg.id} message={msg} userName="Marie D." />
+                    <MessageBubble
+                      key={msg.id}
+                      message={msg}
+                      userName="Marie D."
+                      onActionClick={(route) => route && navigate(route)}
+                    />
                   ))}
 
                   {isPolling && (

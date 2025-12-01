@@ -35,8 +35,13 @@ export default function SuggestionsPage() {
   const saveMutation = useSaveSuggestion()
   const contactMutation = useContactSuggestion()
 
+  // Debug log
+  console.log('📊 suggestionsData:', suggestionsData)
+  console.log('📊 suggestionsData?.suggestions:', suggestionsData?.suggestions)
+
   const filteredSuggestions = useMemo(() => {
     const allSuggestions = suggestionsData?.suggestions || []
+    console.log('📊 allSuggestions in filter:', allSuggestions.length, allSuggestions)
 
     switch (currentFilter) {
       case 'high':
@@ -54,6 +59,9 @@ export default function SuggestionsPage() {
         return allSuggestions
     }
   }, [suggestionsData, currentFilter])
+
+  console.log('📊 filteredSuggestions:', filteredSuggestions.length, filteredSuggestions)
+  console.log('📊 currentFilter:', currentFilter)
 
   const stats = {
     active: statsData?.total ?? 0,

@@ -6,16 +6,16 @@ export function ProgressBar({ percentage = 0, loading = false, className = '' })
   
   if (loading) {
     return (
-      <div className={`w-full bg-gray-200 rounded-full h-2 ${className}`}>
-        <div className="bg-gray-300 h-2 rounded-full animate-pulse"></div>
+      <div className={`w-full bg-slate-200 rounded-full h-2 ${className}`}>
+        <div className="bg-slate-300 h-2 rounded-full animate-pulse"></div>
       </div>
     )
   }
 
   return (
-    <div className={`w-full bg-gray-200 rounded-full h-2 ${className}`}>
+    <div className={`w-full bg-slate-200 rounded-full h-2 ${className}`}>
       <div 
-        className="bg-green-500 h-2 rounded-full transition-all duration-500 ease-out"
+        className="bg-emerald-500 h-2 rounded-full transition-all duration-500 ease-out"
         style={{ width: `${clampedPercentage}%` }}
       ></div>
     </div>

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import {
   getCompanyProfile,
   createCompany,
@@ -50,7 +51,7 @@ export function useCompanyProfile() {
         if (error?.response?.status === 404) {
           return null
         }
-        console.error('❌ Error fetching company profile:', error)
+        logger.error('Error fetching company profile:', error)
         throw error
       }
     },
@@ -106,7 +107,7 @@ export function useCreateCompany() {
     onError: (error) => {
       const errorMessage = error?.response?.data?.message || 'Erreur lors de la création de l\'entreprise'
       toast.error(errorMessage)
-      console.error('❌ Error creating company:', error)
+      logger.error('Error creating company:', error)
     }
   })
 }
@@ -145,7 +146,7 @@ export function useUpdateCompanyGeneral() {
       if (context?.previousProfile) {
         queryClient.setQueryData(companyKeys.profile(), context.previousProfile)
       }
-      console.error('❌ Error updating company general info:', err)
+      logger.error('Error updating company general info:', err)
       toast.error('Erreur lors de la mise à jour des informations générales')
     },
     onSuccess: () => {
@@ -206,7 +207,7 @@ export function useAddProduction() {
       toast.success('Production ajoutée avec succès')
     },
     onError: (err) => {
-      console.error('❌ Error adding production:', err)
+      logger.error('Error adding production:', err)
       toast.error('Erreur lors de l\'ajout de la production')
     },
   })
@@ -226,7 +227,7 @@ export function useUpdateProduction() {
       toast.success('Production mise à jour')
     },
     onError: (err) => {
-      console.error('❌ Error updating production:', err)
+      logger.error('Error updating production:', err)
       toast.error('Erreur lors de la mise à jour de la production')
     },
   })
@@ -246,7 +247,7 @@ export function useDeleteProduction() {
       toast.success('Production supprimée')
     },
     onError: (err) => {
-      console.error('❌ Error deleting production:', err)
+      logger.error('Error deleting production:', err)
       toast.error('Erreur lors de la suppression de la production')
     },
   })
@@ -271,7 +272,7 @@ export function useBesoins() {
         if (error?.response?.status === 404) {
           return []
         }
-        console.error('❌ Error fetching besoins:', error)
+        logger.error('Error fetching besoins:', error)
         throw error
       }
     },
@@ -299,7 +300,7 @@ export function useAddBesoin() {
       toast.success('Besoin ajouté avec succès')
     },
     onError: (err) => {
-      console.error('❌ Error adding besoin:', err)
+      logger.error('Error adding besoin:', err)
       toast.error('Erreur lors de l\'ajout du besoin')
     },
   })
@@ -319,7 +320,7 @@ export function useUpdateBesoin() {
       toast.success('Besoin mis à jour')
     },
     onError: (err) => {
-      console.error('❌ Error updating besoin:', err)
+      logger.error('Error updating besoin:', err)
       toast.error('Erreur lors de la mise à jour du besoin')
     },
   })
@@ -339,7 +340,7 @@ export function useDeleteBesoin() {
       toast.success('Besoin supprimé')
     },
     onError: (err) => {
-      console.error('❌ Error deleting besoin:', err)
+      logger.error('Error deleting besoin:', err)
       toast.error('Erreur lors de la suppression du besoin')
     },
   })
@@ -364,7 +365,7 @@ export function useDechets() {
         if (error?.response?.status === 404) {
           return []
         }
-        console.error('❌ Error fetching dechets:', error)
+        logger.error('Error fetching dechets:', error)
         throw error
       }
     },
@@ -392,7 +393,7 @@ export function useAddDechet() {
       toast.success('Déchet ajouté avec succès')
     },
     onError: (err) => {
-      console.error('❌ Error adding dechet:', err)
+      logger.error('Error adding dechet:', err)
       toast.error('Erreur lors de l\'ajout du déchet')
     },
   })
@@ -412,7 +413,7 @@ export function useUpdateDechet() {
       toast.success('Déchet mis à jour')
     },
     onError: (err) => {
-      console.error('❌ Error updating dechet:', err)
+      logger.error('Error updating dechet:', err)
       toast.error('Erreur lors de la mise à jour du déchet')
     },
   })
@@ -432,7 +433,7 @@ export function useDeleteDechet() {
       toast.success('Déchet supprimé')
     },
     onError: (err) => {
-      console.error('❌ Error deleting dechet:', err)
+      logger.error('Error deleting dechet:', err)
       toast.error('Erreur lors de la suppression du déchet')
     },
   })
@@ -457,7 +458,7 @@ export function useGeolocation() {
         if (error?.response?.status === 404) {
           return null
         }
-        console.error('❌ Error fetching geolocation:', error)
+        logger.error('Error fetching geolocation:', error)
         throw error
       }
     },
@@ -485,7 +486,7 @@ export function useUpdateGeolocation() {
       toast.success('Géolocalisation mise à jour')
     },
     onError: (err) => {
-      console.error('❌ Error updating geolocation:', err)
+      logger.error('Error updating geolocation:', err)
       toast.error('Erreur lors de la mise à jour de la géolocalisation')
     },
   })

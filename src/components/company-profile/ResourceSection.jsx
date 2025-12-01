@@ -31,7 +31,7 @@ export function ResourceSection({
   return (
     <section>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
+        <h2 className="text-xl font-semibold text-slate-900 flex items-center space-x-2">
           {IconComponent && <IconComponent className="h-5 w-5" />}
           <span>{title}</span>
         </h2>
@@ -54,8 +54,8 @@ export function ResourceSection({
         emptyState && (
           <Card>
             <CardContent className="p-8 text-center space-y-4">
-              {EmptyIcon && <EmptyIcon className="h-6 w-6 text-gray-400 mx-auto" />}
-              <p className="text-gray-500">{emptyState.message}</p>
+              {EmptyIcon && <EmptyIcon className="h-6 w-6 text-slate-400 mx-auto" />}
+              <p className="text-slate-500">{emptyState.message}</p>
               <Button variant="outline" onClick={onAdd} disabled={!onAdd}>
                 {buttonLabel}
               </Button>

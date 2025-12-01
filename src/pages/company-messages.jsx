@@ -73,18 +73,27 @@ function ConversationItem({ conversation, active, onSelect }) {
 
 function MessageBubble({ message, isOwn }) {
   return (
-    <div className={cn('max-w-[70%] rounded-xl px-4 py-3 shadow-sm', isOwn ? 'ml-auto bg-blue-600 text-white' : 'mr-auto bg-white border border-slate-200 text-slate-700')}>
+    <div
+      className={cn(
+        'max-w-[72%] rounded-2xl px-4 py-3 shadow-sm border transition',
+        isOwn
+          ? 'ml-auto bg-blue-600 text-white border-blue-700/60'
+          : 'mr-auto bg-white text-slate-800 border-slate-200'
+      )}
+    >
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold tracking-wide uppercase text-slate-400">
+        <p className={cn('text-xs font-semibold tracking-wide uppercase', isOwn ? 'text-blue-50' : 'text-slate-500')}>
           {isOwn ? 'Vous' : message.authorName}
         </p>
-        <span className="text-[10px] text-slate-400">{formatRelative(message.createdAt)}</span>
+        <span className={cn('text-[10px]', isOwn ? 'text-blue-100' : 'text-slate-400')}>
+          {formatRelative(message.createdAt)}
+        </span>
       </div>
       <p className="mt-1 text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
       {message.attachments?.length ? (
         <div className="mt-2 space-y-1 text-xs">
           {message.attachments.map((file) => (
-            <a key={file.id} href={file.url ?? '#'} target="_blank" rel="noopener noreferrer" className="text-blue-100 underline">
+            <a key={file.id} href={file.url ?? '#'} target="_blank" rel="noopener noreferrer" className={cn('underline', isOwn ? 'text-blue-100' : 'text-blue-600')}>
               {file.name}
             </a>
           ))}
@@ -130,6 +139,7 @@ export default function CompanyMessagesPage() {
   const [selectedConversation, setSelectedConversation] = useState(null)
   const [prefilledCompany, setPrefilledCompany] = useState(() => location.state?.company ?? null)
   const processedCompanyRef = useRef(null)
+  const messagesEndRef = useRef(null)
 
   const normalizeId = useCallback((value) => (value == null ? null : String(value)), [])
 
@@ -284,6 +294,19 @@ export default function CompanyMessagesPage() {
   const messagesQuery = useCompanyConversationMessages(selectedConversationId, { pollInterval: 12_000 })
   const messages = messagesQuery.data ?? []
 
+  const isOwnMessage = useCallback((item) => {
+    const role = (item?.authorRole ?? '').toLowerCase()
+    return (
+      item?.isOwn === true ||
+      role === 'user' ||
+      role === 'owner' ||
+      role === 'admin' ||
+      role === 'me' ||
+      role === 'staff' ||
+      role === 'company'
+    )
+  }, [])
+
   const extendedCompanies = useMemo(() => {
     const items = [...normalizedCompanies]
     const prefilledCompanyId = normalizeId(prefilledCompany?.id ?? prefilledCompany?.id_company ?? prefilledCompany?.company_id)
@@ -345,6 +368,12 @@ export default function CompanyMessagesPage() {
     })
   }
 
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages.length, selectedConversationId])
+
   const renderMessages = () => {
     if (messagesQuery.isLoading) {
       return (
@@ -373,8 +402,13 @@ export default function CompanyMessagesPage() {
     return (
       <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
         {messages.map((item, index) => (
-          <MessageBubble key={item.id || `msg-${item.createdAt}-${index}`} message={item} isOwn={item.authorRole === 'user' || item.authorRole === 'owner'} />
+          <MessageBubble
+            key={item.id || `msg-${item.createdAt}-${index}`}
+            message={item}
+            isOwn={isOwnMessage(item)}
+          />
         ))}
+        <div ref={messagesEndRef} />
       </div>
     )
   }
@@ -575,11 +609,16 @@ export default function CompanyMessagesPage() {
                           onClick={handleSendMessage}
                         >
                           {sendMessageMutation.isPending ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Envoi...
+                            </>
                           ) : (
-                            <Send className="mr-2 h-4 w-4" />
+                            <>
+                              <Send className="mr-2 h-4 w-4" />
+                              Envoyer
+                            </>
                           )}
-                          Envoyer
                         </Button>
                       </div>
                       <p className="mt-2 text-xs text-slate-400">Appuyez sur Ctrl + Entrée pour envoyer plus rapidement.</p>

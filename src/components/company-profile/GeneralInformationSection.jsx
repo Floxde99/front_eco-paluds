@@ -15,7 +15,7 @@ export function GeneralInformationSection({
   return (
     <section>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
+        <h2 className="text-xl font-semibold text-slate-900 flex items-center space-x-2">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600">
             <span className="text-sm font-semibold">1</span>
           </span>
@@ -40,7 +40,7 @@ export function GeneralInformationSection({
                   className="mt-1"
                 />
               ) : (
-                <p className="mt-1 text-gray-900 font-medium">{value.nom_entreprise}</p>
+                <p className="mt-1 text-slate-900 font-medium">{value.nom_entreprise}</p>
               )}
             </div>
 
@@ -54,7 +54,7 @@ export function GeneralInformationSection({
                   className="mt-1"
                 />
               ) : (
-                <p className="mt-1 text-gray-900">{value.secteur}</p>
+                <p className="mt-1 text-slate-900">{value.secteur}</p>
               )}
             </div>
 
@@ -65,11 +65,11 @@ export function GeneralInformationSection({
                   id="description"
                   value={value.description}
                   onChange={(e) => onFieldChange('description', e.target.value)}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
                 />
               ) : (
-                <p className="mt-1 text-gray-700">{value.description}</p>
+                <p className="mt-1 text-slate-700">{value.description}</p>
               )}
             </div>
           </div>

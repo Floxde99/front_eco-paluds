@@ -88,7 +88,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
-  const { updateUser } = useAuth()
+  const { user, loading: authLoading, updateUser } = useAuth()
   const [searchParams] = useSearchParams()
 
   const loginInitialValues = useMemo(() => ({ email: '', password: '' }), [])
@@ -104,6 +104,13 @@ const Login = () => {
     }),
     []
   )
+
+  // Rediriger si l'utilisateur est déjà connecté
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/home', { replace: true })
+    }
+  }, [user, authLoading, navigate])
 
   // Reset les erreurs au changement de mode
   const handleModeChange = (newMode) => {
@@ -181,23 +188,37 @@ const Login = () => {
       setLoading(true)
       const data = await loginUser(values)
       if (data?.accessToken) {
+        // 1. Stocker le token
         localStorage.setItem('authToken', data.accessToken)
         
-        // Récupérer et définir l'utilisateur dans le contexte avant de naviguer
+        // 2. Récupérer les données utilisateur
+        let userData = null
         try {
-          const userData = await getCurrentUser()
-          if (userData?.user) {
-            updateUser(userData.user)
-          }
+          const response = await getCurrentUser()
+          userData = response?.user
         } catch (err) {
           console.error('Erreur lors de la récupération de l\'utilisateur:', err)
+          localStorage.removeItem('authToken')
           toast.error('Erreur lors de la connexion')
           return
         }
         
+        if (!userData) {
+          console.error('Pas de données utilisateur reçues')
+          localStorage.removeItem('authToken')
+          toast.error('Erreur lors de la connexion')
+          return
+        }
+        
+        // 3. Mettre à jour le contexte d'authentification
+        updateUser(userData)
+        
+        // 4. Afficher le toast de succès
         toast.success('Connexion réussie')
         helpers.reset()
-        navigate('/home')
+        
+        // 5. Naviguer vers home (utiliser replace pour éviter de revenir au login)
+        navigate('/home', { replace: true })
       }
     } catch (err) {
       console.error('Login error', err)
@@ -289,7 +310,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 via-white to-slate-100 p-8">
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>

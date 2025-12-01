@@ -5,7 +5,7 @@ export default function MentionsLegales() {
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Mentions légales</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-6">Mentions légales</h1>
         <div className="prose prose-slate max-w-none">
           <p>
             Conformément à l’article 6 III-1 de la loi n°2004‑575 du 21 juin 2004 pour la

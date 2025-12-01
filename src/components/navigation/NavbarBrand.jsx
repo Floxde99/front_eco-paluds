@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-export function NavbarBrand({ textClassName = 'text-gray-900' }) {
+export function NavbarBrand({ textClassName = 'text-slate-900' }) {
   return (
     <Link to="/" className="flex items-center gap-2">
       <img src="/logo.jpg" alt="Ecopaluds" className="h-8 w-8" />

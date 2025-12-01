@@ -20,11 +20,11 @@ function NavbarContent() {
   const navbarClasses = isAdminDashboard
     ? 'bg-[#d74444] text-white border-b border-[#c43c3c]'
     : isPremiumPage
-      ? 'bg-[#FFC107] shadow-md border-b border-amber-400'
-      : 'bg-white shadow-sm border-b'
+      ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-emerald-600 text-white shadow-md border-b border-blue-500/60'
+      : 'bg-gradient-to-r from-blue-800 via-blue-700 to-blue-600 text-white shadow-md border-b border-blue-500/60'
 
   const contentMaxWidth = isAdminDashboard ? 'max-w-6xl' : 'max-w-7xl'
-  const textColorClass = isAdminDashboard ? 'text-white' : 'text-gray-900'
+  const textColorClass = isAdminDashboard ? 'text-white' : 'text-white'
 
   return (
     <>
