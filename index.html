@@ -1,13 +1,92 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/jpg" href="/favicon.jpg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ecopaluds</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Favicon optimisé -->
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+
+  <!-- SEO Meta Tags -->
+  <title>Ecopaluds - Économie Circulaire Zone des Paluds</title>
+  <meta name="description"
+    content="Ecopaluds connecte les entreprises de la zone des Paluds à Aubagne pour créer des synergies d'économie circulaire. Valorisez vos déchets et trouvez des partenaires locaux." />
+  <meta name="keywords"
+    content="économie circulaire, déchets, valorisation, Aubagne, Paluds, entreprises, partenaires" />
+  <meta name="author" content="Ecopaluds" />
+
+  <!-- Open Graph / Social Media -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Ecopaluds - Économie Circulaire Zone des Paluds" />
+  <meta property="og:description"
+    content="Connectez les entreprises de la zone des Paluds pour créer des synergies d'économie circulaire." />
+  <meta property="og:site_name" content="Ecopaluds" />
+
+  <!-- Performance: Preconnect to important origins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Performance: DNS Prefetch for external resources -->
+  <link rel="dns-prefetch" href="https://unpkg.com" />
+  <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
+
+  <!-- Theme color for mobile browsers -->
+  <meta name="theme-color" content="#0d7377" />
+
+  <!-- Inline critical CSS for faster FCP -->
+  <style>
+    /* Critical CSS - immediate render */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f8fafc
+    }
+
+    #root {
+      min-height: 100vh
+    }
+
+    .page-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #f8fafc, #fff, #f1f5f9)
+    }
+
+    .page-loader .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #99f6e4;
+      border-top-color: #0d9488;
+      border-radius: 50%;
+      animation: spin 1s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Initial loading state shown while JS loads -->
+  <div id="root">
+    <div class="page-loader">
+      <div class="spinner"></div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

@@ -22,15 +22,63 @@ export default defineConfig({
     },
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-leaflet': ['leaflet', 'react-leaflet'],
-          'vendor-icons': ['lucide-react'],
-        },
+    // Optimize output
+    target: 'es2020',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
       },
     },
+    // Enable CSS code splitting for parallel loading
+    cssCodeSplit: true,
+    // Optimize chunk size
+    chunkSizeWarningLimit: 500,
+    rollupOptions: {
+      output: {
+        // Improved manual chunks for better caching and parallel loading
+        manualChunks: {
+          // Core React ecosystem - rarely changes
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // Data fetching layer
+          'vendor-query': ['@tanstack/react-query'],
+          // Map components - heavy but only needed on specific pages
+          'vendor-leaflet': ['leaflet', 'react-leaflet'],
+          // Icons - frequently used but can be deferred
+          'vendor-icons': ['lucide-react'],
+          // Form handling
+          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+        },
+        // Asset file naming for better caching
+        assetFileNames: (assetInfo) => {
+          const extType = assetInfo.name?.split('.').at(1) || ''
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico|webp|avif/i.test(extType)) {
+            return 'assets/images/[name]-[hash][extname]'
+          }
+          if (/woff2?|eot|ttf|otf/i.test(extType)) {
+            return 'assets/fonts/[name]-[hash][extname]'
+          }
+          return 'assets/[name]-[hash][extname]'
+        },
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+      },
+    },
+    // Enable source maps for debugging in production (optional)
+    sourcemap: false,
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
+    exclude: ['leaflet'], // Leaflet will be loaded on demand
+  },
+  // Preview server configuration
+  preview: {
+    port: 4173,
+  },
+  // Development server
+  server: {
+    port: 5173,
   },
 })

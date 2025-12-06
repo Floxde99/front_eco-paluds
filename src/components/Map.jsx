@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
-import 'leaflet/dist/leaflet.css'
+import { useLeafletCSS } from '@/components/LeafletCSS'
 import L from 'leaflet'
 
 // Fix pour les icônes Leaflet
@@ -42,6 +42,9 @@ export function InteractiveMap({
   markers = [],
   className = 'h-64 w-full rounded-lg',
 }) {
+  // Load Leaflet CSS dynamically for better FCP
+  useLeafletCSS()
+
   const validMarkers = useMemo(
     () =>
       markers.filter((marker) => Array.isArray(marker?.position) && marker.position.length === 2),
