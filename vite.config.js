@@ -22,15 +22,8 @@ export default defineConfig({
     },
   },
   build: {
-    // Optimize output
+    // Optimize output - use default esbuild minifier (faster and built-in)
     target: 'es2020',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
     // Enable CSS code splitting for parallel loading
     cssCodeSplit: true,
     // Optimize chunk size
@@ -47,8 +40,8 @@ export default defineConfig({
           'vendor-leaflet': ['leaflet', 'react-leaflet'],
           // Icons - frequently used but can be deferred
           'vendor-icons': ['lucide-react'],
-          // Form handling
-          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          // Validation
+          'vendor-zod': ['zod'],
         },
         // Asset file naming for better caching
         assetFileNames: (assetInfo) => {
@@ -71,7 +64,6 @@ export default defineConfig({
   // Optimize dependencies
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
-    exclude: ['leaflet'], // Leaflet will be loaded on demand
   },
   // Preview server configuration
   preview: {

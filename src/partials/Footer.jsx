@@ -8,7 +8,7 @@ export function Footer() {
     <footer className="bg-gradient-to-r from-slate-900 via-blue-900 to-blue-700 text-slate-100">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12 md:flex-row md:items-start md:justify-between">
         <div className="flex items-start gap-3">
-          <img src="/logo.jpg" alt="Ecopaluds" className="h-10 w-10 rounded-lg object-cover ring-2 ring-white/20" />
+          <img src="/logo.webp" alt="Ecopaluds" className="h-10 w-10 rounded-lg object-cover ring-2 ring-white/20" />
           <div className="space-y-2">
             <p className="text-lg font-semibold">Ecopaluds</p>
             <p className="text-sm text-slate-100/80 leading-relaxed">
