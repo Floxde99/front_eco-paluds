@@ -137,7 +137,7 @@ const Login = () => {
         }
       }
     )
-    
+
     // Redirection vers login après un court délai
     setTimeout(() => {
       navigate('/login')
@@ -146,9 +146,9 @@ const Login = () => {
 
   const handleSignupError = (err) => {
     console.error('❌ Signup error:', err)
-    
+
     let errorMessage = 'Une erreur inattendue s\'est produite'
-    
+
     if (err?.response?.status === 400) {
       // Erreur de validation
       const errorData = err.response.data
@@ -164,7 +164,7 @@ const Login = () => {
     } else if (err?.response?.status === 409) {
       // Conflit (email déjà existant)
       errorMessage = 'Un compte existe déjà avec cet email'
-          queryClient.clear()
+      queryClient.clear()
     } else if (err?.response?.status === 422) {
       // Erreur de validation
       errorMessage = 'Les données fournies ne sont pas valides'
@@ -177,7 +177,7 @@ const Login = () => {
     } else if (err?.message) {
       errorMessage = err.message
     }
-    
+
     setError(errorMessage)
     toast.error(errorMessage, { duration: 5000 })
   }
@@ -190,7 +190,7 @@ const Login = () => {
       if (data?.accessToken) {
         // 1. Stocker le token
         localStorage.setItem('authToken', data.accessToken)
-        
+
         // 2. Récupérer les données utilisateur
         let userData = null
         try {
@@ -202,31 +202,38 @@ const Login = () => {
           toast.error('Erreur lors de la connexion')
           return
         }
-        
+
         if (!userData) {
           console.error('Pas de données utilisateur reçues')
           localStorage.removeItem('authToken')
           toast.error('Erreur lors de la connexion')
           return
         }
-        
+
         // 3. Mettre à jour le contexte d'authentification
         updateUser(userData)
-        
+
         // 4. Afficher le toast de succès
         toast.success('Connexion réussie')
         helpers.reset()
-        
+
         // 5. Naviguer vers home (utiliser replace pour éviter de revenir au login)
         navigate('/home', { replace: true })
       }
     } catch (err) {
       console.error('Login error', err)
-      
+
       // ❌ Gestion détaillée des erreurs de connexion
+
       let errorMessage = 'Une erreur inattendue s\'est produite'
-      
-      if (err?.response?.status === 401) {
+      const errorData = err?.response?.data
+
+      // Priorité au message du backend s'il existe (notamment pour le 404 qui renvoie "Email ou mot de passe incorrect")
+      if (errorData?.error) {
+        errorMessage = errorData.error
+      } else if (errorData?.message) {
+        errorMessage = errorData.message
+      } else if (err?.response?.status === 401) {
         errorMessage = 'Email ou mot de passe incorrect, ou compte non confirmé'
         helpers.setErrors({ email: errorMessage, password: errorMessage })
       } else if (err?.response?.status === 403) {
@@ -244,7 +251,7 @@ const Login = () => {
       } else if (err?.message) {
         errorMessage = err.message
       }
-      
+
       setError(errorMessage)
       toast.error(errorMessage, { duration: 5000 })
     } finally {
@@ -280,19 +287,19 @@ const Login = () => {
           }
         }
       )
-      
+
       // Redirection vers login après un court délai
       setTimeout(() => {
         navigate('/login')
       }, 2000)
-      
+
     } catch (err) {
       console.error('Signup error:', err)
-      
+
       // 🔍 CAS SPÉCIAL : Vérifier si c'est un 409 avec données de succès
       if (err?.response?.status === 409 && err?.response?.data) {
         const errorData = err.response.data
-        
+
         // Si le 409 contient des données qui ressemblent à une réponse de succès
         if (errorData?.user || errorData?.message?.includes('success') || errorData?.email) {
           helpers.reset()
@@ -300,10 +307,10 @@ const Login = () => {
           return
         }
       }
-      
+
       // ❌ Gestion normale des erreurs
       handleSignupError(err)
-      
+
     } finally {
       setLoading(false)
     }
