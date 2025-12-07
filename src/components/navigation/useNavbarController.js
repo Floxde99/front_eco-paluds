@@ -46,17 +46,17 @@ export function useNavbarController() {
       logout()
 
       if (response?.ok) {
-        toast.success('D�connexion r�ussie c�t� serveur')
+        toast.success('Déconnexion réussie')
       } else if (response?.status === 401 || response?.status === 403) {
-        toast.info('Session expir�e c�t� serveur - d�connect� localement')
+        toast.info('Session expirée - Déconnexion effectuée')
       } else if (response?.status >= 500) {
-        toast.info('D�connect� localement (erreur serveur)')
+        toast.info('Déconnexion effectuée (erreur serveur)')
       } else {
-        toast.info('D�connect� localement')
+        toast.info('Déconnexion effectuée')
       }
     } catch {
       logout()
-      toast.info('D�connect� localement')
+      toast.info('Déconnexion effectuée')
     } finally {
       closeMobile()
       navigate('/')

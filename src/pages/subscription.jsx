@@ -19,10 +19,11 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import {
-  createPayPalCheckoutSession,
   createSubscriptionPaymentIntent,
   fetchBillingPlans,
   fetchSubscriptionStatus,
+  createPayPalCheckoutSession,
+  confirmPayment,
 } from '@/services/BillingApi'
 
 const SubscriptionPageContext = createContext(null)
@@ -66,7 +67,8 @@ export default function SubscriptionPage() {
   const [intentError, setIntentError] = useState(null)
   const [intentRefreshCounter, setIntentRefreshCounter] = useState(0)
   const pendingPlanIdRef = useRef(null)
-  const subscriptionSelectionAppliedRef = useRef(false)
+  const [subscriptionSnapshot, setSubscriptionSnapshot] = useState(null)
+  const [statusRefreshCounter, setStatusRefreshCounter] = useState(0)
 
   const plansQuery = useQuery({
     queryKey: ['billing-plans'],
@@ -91,21 +93,24 @@ export default function SubscriptionPage() {
   }, [plans])
 
   useEffect(() => {
-    if (!plans.length || subscriptionSelectionAppliedRef.current) {
+    if (!plans.length) {
       return
     }
 
     let isActive = true
 
-    async function selectSubscribedPlan() {
+    async function syncSubscriptionStatus() {
       try {
         const response = await fetchSubscriptionStatus()
         const snapshot = normalizeSubscriptionStatusResponse(response)
-        if (
-          !isActive ||
-          !snapshot ||
-          !isActiveSubscriptionStatus(snapshot.status)
-        ) {
+
+        if (!isActive) {
+          return
+        }
+
+        setSubscriptionSnapshot(snapshot)
+
+        if (!snapshot || !isActiveSubscriptionStatus(snapshot.status)) {
           return
         }
 
@@ -119,18 +124,19 @@ export default function SubscriptionPage() {
           setSelectedPlanId(subscribedPlanId)
         }
       } catch (error) {
-        // ignore unauthorized or missing subscription errors
-      } finally {
-        subscriptionSelectionAppliedRef.current = true
+        if (!isActive) {
+          return
+        }
+        setSubscriptionSnapshot(null)
       }
     }
 
-    selectSubscribedPlan()
+    syncSubscriptionStatus()
 
     return () => {
       isActive = false
     }
-  }, [plans])
+  }, [plans, statusRefreshCounter])
 
   const selectedPlan = useMemo(
     () => plans.find((plan) => plan.id === selectedPlanId) ?? null,
@@ -145,8 +151,13 @@ export default function SubscriptionPage() {
   useEffect(() => {
     if (!requiresPayment) {
       setSelectedPaymentMethod('card')
+      return
     }
-  }, [requiresPayment])
+
+    if (requiresPayment && !stripePromise && selectedPaymentMethod === 'card') {
+      setSelectedPaymentMethod('paypal')
+    }
+  }, [requiresPayment, selectedPaymentMethod])
 
   const { mutateAsync: requestPaymentIntent, isPending: isPreparingIntent } = useMutation({
     mutationFn: createSubscriptionPaymentIntent,
@@ -184,7 +195,6 @@ export default function SubscriptionPage() {
         const response = await requestPaymentIntent({
           planId,
           paymentMethodType: 'card',
-          billingDetails: extractBillingDetails(formData),
         })
 
         if (!isActive || pendingPlanIdRef.current !== planId) {
@@ -216,10 +226,14 @@ export default function SubscriptionPage() {
     return () => {
       isActive = false
     }
-  }, [formData, requestPaymentIntent, requiresPayment, selectedPaymentMethod, selectedPlan, intentRefreshCounter])
+  }, [requestPaymentIntent, requiresPayment, selectedPaymentMethod, selectedPlan, intentRefreshCounter])
 
   const refreshPaymentIntent = useCallback(() => {
     setIntentRefreshCounter((counter) => counter + 1)
+  }, [])
+
+  const refreshSubscriptionStatus = useCallback(() => {
+    setStatusRefreshCounter((counter) => counter + 1)
   }, [])
 
   const contextValue = useMemo(
@@ -238,6 +252,8 @@ export default function SubscriptionPage() {
       intentError,
       isPreparingIntent,
       refreshPaymentIntent,
+      subscriptionSnapshot,
+      refreshSubscriptionStatus,
     }),
     [
       plans,
@@ -250,6 +266,8 @@ export default function SubscriptionPage() {
       intentError,
       isPreparingIntent,
       refreshPaymentIntent,
+      subscriptionSnapshot,
+      refreshSubscriptionStatus,
     ],
   )
 
@@ -280,17 +298,27 @@ export default function SubscriptionPage() {
 }
 
 function PageHeader() {
+  const { subscriptionSnapshot, selectedPlan } = useSubscriptionPage()
+  const hasActiveSubscription = isActiveSubscriptionStatus(subscriptionSnapshot?.status)
+  const activePlanLabel = hasActiveSubscription ? selectedPlan?.name ?? 'Abonnement actif' : 'Premium'
+
   return (
     <header className="space-y-4 text-center">
       <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-[#FFF4CC] px-4 py-1 text-xs font-semibold uppercase tracking-wide text-[#FFC107]">
         <Crown className="h-3.5 w-3.5" />
-        <span>Premium</span>
+        <span>{activePlanLabel}</span>
       </div>
       <div className="space-y-3">
         <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">Passez à Ecopaluds Premium</h1>
-        <p className="mx-auto max-w-2xl text-sm text-slate-600 md:text-base">
-          Débloquez toutes les fonctionnalités pour maximiser vos opportunités d'affaires et propulser votre entreprise.
-        </p>
+        {hasActiveSubscription ? (
+          <p className="mx-auto max-w-2xl text-sm text-emerald-700 md:text-base">
+            Votre abonnement est actif. Merci pour votre confiance !
+          </p>
+        ) : (
+          <p className="mx-auto max-w-2xl text-sm text-slate-600 md:text-base">
+            Débloquez toutes les fonctionnalités pour maximiser vos opportunités d'affaires et propulser votre entreprise.
+          </p>
+        )}
       </div>
     </header>
   )
@@ -310,15 +338,17 @@ function PricingSection() {
 }
 
 function PlanCard({ plan }) {
-  const { selectedPlanId, selectPlan } = useSubscriptionPage()
+  const { selectedPlanId, selectPlan, subscriptionSnapshot } = useSubscriptionPage()
   const isSelected = selectedPlanId === plan.id
+  const hasActiveSubscription = isActiveSubscriptionStatus(subscriptionSnapshot?.status)
+  const isCurrentPlan = hasActiveSubscription && subscriptionSnapshot?.planId === plan.id
 
   const handleSelect = useCallback(() => {
-    if (plan.preventSelection) {
+    if (plan.preventSelection || isCurrentPlan) {
       return
     }
     selectPlan(plan.id)
-  }, [plan, selectPlan])
+  }, [plan, selectPlan, isCurrentPlan])
 
   return (
     <Card
@@ -326,11 +356,16 @@ function PlanCard({ plan }) {
       className={cn(
         'relative h-full cursor-pointer border-slate-200 transition-all hover:shadow-md',
         isSelected && 'border-blue-500 shadow-lg ring-2 ring-blue-100',
+        isCurrentPlan && 'border-emerald-500 shadow-lg ring-2 ring-emerald-100',
         plan.highlight && 'border-2',
-        plan.preventSelection && 'cursor-default opacity-90',
+        (plan.preventSelection || isCurrentPlan) && 'cursor-default opacity-90',
       )}
     >
-      {plan.badge ? (
+      {isCurrentPlan ? (
+        <span className="absolute right-4 top-4 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+          Abonnement actif
+        </span>
+      ) : plan.badge ? (
         <span className="absolute right-4 top-4 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
           {plan.badge}
         </span>
@@ -361,6 +396,15 @@ function PlanCard({ plan }) {
             onClick={(event) => event.stopPropagation()}
           >
             <a href={plan.contactLink}>Nous contacter</a>
+          </Button>
+        ) : isCurrentPlan ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-auto w-full cursor-default border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+            disabled
+          >
+            Abonnement actuel
           </Button>
         ) : (
           <Button
@@ -488,6 +532,7 @@ function PaymentForm() {
     clientSecret,
     intentError,
     isPreparingIntent,
+    refreshSubscriptionStatus,
   } = useSubscriptionPage()
 
   const [formError, setFormError] = useState(null)
@@ -507,6 +552,31 @@ function PaymentForm() {
     setStatusAlert(null)
   }, [selectedPlan, selectedPaymentMethod])
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const paymentParam = params.get('paiement')
+    const paymentIntentId = params.get('payment_intent')
+    
+    if (paymentParam === 'success' || paymentIntentId) {
+      const syncPayment = async () => {
+        if (paymentIntentId) {
+          try {
+            await confirmPayment(paymentIntentId)
+          } catch (error) {
+            console.warn('⚠️ Erreur confirmation backend après redirect:', error)
+          }
+        }
+        
+        setSuccessMessage('Paiement confirmé ! Votre abonnement est actif.')
+        refreshSubscriptionStatus()
+        
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+      
+      syncPayment()
+    }
+  }, [refreshSubscriptionStatus])
+
   const retrieveSubscriptionSnapshot = useCallback(async () => {
     try {
       const response = await fetchSubscriptionStatus()
@@ -514,8 +584,8 @@ function PaymentForm() {
     } catch (error) {
       const statusError = new Error(
         error?.response?.data?.message ??
-          error?.message ??
-          "Impossible de r�cup�rer l'�tat de l'abonnement pour le moment.",
+        error?.message ??
+        "Impossible de r�cup�rer l'�tat de l'abonnement pour le moment.",
       )
       statusError.reason = 'subscription-status'
       throw statusError
@@ -619,11 +689,22 @@ function PaymentForm() {
         })
         const confirm = await cardPaymentRef.current?.confirmPayment()
         if (confirm) {
+          const paymentIntentId = confirm.id || clientSecret?.split('_secret_')[0]
+          
+          if (paymentIntentId) {
+            try {
+              await confirmPayment(paymentIntentId)
+            } catch (confirmError) {
+              console.warn('⚠️ Erreur confirmation backend:', confirmError)
+            }
+          }
+
           const snapshot = await waitForSubscriptionConfirmation()
 
           if (snapshot && isActiveSubscriptionStatus(snapshot.status)) {
             setSuccessMessage('Paiement confirmé ! Votre abonnement est actif.')
             setStatusAlert(null)
+            refreshSubscriptionStatus()
             return
           }
 
@@ -671,9 +752,9 @@ function PaymentForm() {
             message: fallbackMessage,
             ...(error?.isNetworkTimeout
               ? {
-                  actionLabel: 'Réessayer',
-                  onAction: () => retryPaymentRef.current?.(),
-                }
+                actionLabel: 'Réessayer',
+                onAction: () => retryPaymentRef.current?.(),
+              }
               : {}),
           })
         } else {
@@ -700,6 +781,7 @@ function PaymentForm() {
     startPayPalCheckout,
     stripePromise,
     waitForSubscriptionConfirmation,
+    refreshSubscriptionStatus,
   ])
 
   const handleSubmit = useCallback(
@@ -741,11 +823,19 @@ function PaymentForm() {
           selectedPaymentMethod={selectedPaymentMethod}
           setSelectedPaymentMethod={setSelectedPaymentMethod}
           disabled={!requiresPayment}
+          cardDisabled={!stripePromise}
         />
       </div>
 
+      {requiresPayment && !stripePromise ? (
+        <InlineAlert
+          variant="error"
+          message="Le paiement par carte est indisponible (clé Stripe manquante). Continuez avec PayPal."
+        />
+      ) : null}
+
       {requiresPayment ? (
-        <BillingDetailsFields formData={formData} onChange={handleChange} />
+        <BillingDetailsFields formData={formData} onChange={handleChange} required={selectedPaymentMethod === 'card'} />
       ) : (
         <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           Aucun paiement n'est requis pour ce plan. Validez simplement les conditions pour activer votre accès.
@@ -775,7 +865,7 @@ function PaymentForm() {
       ) : null}
 
       <div className="space-y-4">
-        <BillingAddress formData={formData} onChange={handleChange} />
+        <BillingAddress formData={formData} onChange={handleChange} required={selectedPaymentMethod === 'card'} />
 
         <div className="flex items-center gap-3">
           <input
@@ -885,7 +975,7 @@ const CardPaymentFields = React.forwardRef(function CardPaymentFields({ formData
   )
 })
 
-function BillingDetailsFields({ formData, onChange }) {
+function BillingDetailsFields({ formData, onChange, required = true }) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -895,7 +985,7 @@ function BillingDetailsFields({ formData, onChange }) {
           placeholder="Prénom Nom"
           value={formData.cardHolder}
           onChange={onChange('cardHolder')}
-          required
+          required={required}
         />
       </div>
       <div className="space-y-2">
@@ -906,14 +996,14 @@ function BillingDetailsFields({ formData, onChange }) {
           placeholder="nom@entreprise.fr"
           value={formData.email}
           onChange={onChange('email')}
-          required
+          required={required}
         />
       </div>
     </div>
   )
 }
 
-function BillingAddress({ formData, onChange }) {
+function BillingAddress({ formData, onChange, required = true }) {
   return (
     <div className="space-y-4 rounded-md border border-slate-200 p-4">
       <Label className="text-sm font-semibold text-slate-700">Adresse de facturation</Label>
@@ -925,7 +1015,7 @@ function BillingAddress({ formData, onChange }) {
             placeholder="Nom de l'entreprise"
             value={formData.company}
             onChange={onChange('company')}
-            required
+            required={required}
           />
         </div>
         <div className="md:col-span-2 space-y-2">
@@ -935,7 +1025,7 @@ function BillingAddress({ formData, onChange }) {
             placeholder="Adresse"
             value={formData.address}
             onChange={onChange('address')}
-            required
+            required={required}
           />
         </div>
         <div className="md:col-span-2 space-y-2">
@@ -954,16 +1044,16 @@ function BillingAddress({ formData, onChange }) {
             inputMode="numeric"
             value={formData.postalCode}
             onChange={onChange('postalCode')}
-            required
+            required={required}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="city">Ville *</Label>
-          <Input id="city" value={formData.city} onChange={onChange('city')} required />
+          <Input id="city" value={formData.city} onChange={onChange('city')} required={required} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="country">Pays *</Label>
-          <Input id="country" value={formData.country} onChange={onChange('country')} required />
+          <Input id="country" value={formData.country} onChange={onChange('country')} required={required} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="vatNumber">N° de TVA (optionnel)</Label>
@@ -979,12 +1069,13 @@ function BillingAddress({ formData, onChange }) {
   )
 }
 
-function PaymentMethodToggle({ selectedPaymentMethod, setSelectedPaymentMethod, disabled }) {
+function PaymentMethodToggle({ selectedPaymentMethod, setSelectedPaymentMethod, disabled, cardDisabled }) {
   return (
     <div className="grid grid-cols-2 gap-3">
       {PAYMENT_METHODS.map((method) => {
         const Icon = method.icon
         const isActive = selectedPaymentMethod === method.id
+        const isDisabled = disabled || (method.id === 'card' && cardDisabled)
         return (
           <Button
             key={method.id}
@@ -992,7 +1083,7 @@ function PaymentMethodToggle({ selectedPaymentMethod, setSelectedPaymentMethod, 
             variant={isActive ? 'default' : 'outline'}
             className="w-full"
             onClick={() => setSelectedPaymentMethod(method.id)}
-            disabled={disabled}
+            disabled={isDisabled}
           >
             <Icon className="h-4 w-4" />
             {method.label}

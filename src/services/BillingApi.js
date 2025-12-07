@@ -25,3 +25,10 @@ export async function createPayPalCheckoutSession({ planId }) {
   })
   return response.data
 }
+
+export async function confirmPayment(paymentIntentId) {
+  const response = await api.post('/billing/confirm-payment', {
+    paymentIntentId,
+  })
+  return response.data
+}
