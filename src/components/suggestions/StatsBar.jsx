@@ -1,6 +1,6 @@
 export default function SuggestionsStatsBar({ stats = {} }) {
   return (
-    <div className="flex items-center gap-8 rounded-lg bg-white p-4 shadow-sm border border-slate-200">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 rounded-lg bg-white p-4 shadow-sm border border-slate-200">
       <SuggestionsStatBlock
         value={stats.active ?? 0}
         label="Suggestions actives"
@@ -25,7 +25,7 @@ export default function SuggestionsStatsBar({ stats = {} }) {
 
 function SuggestionsStatBlock({ value = 0, label, backgroundClass, textClass }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3 p-2 rounded-md border border-slate-100">
       <div
         className={`flex h-10 w-10 items-center justify-center rounded-full ${backgroundClass} ${textClass}`}
       >

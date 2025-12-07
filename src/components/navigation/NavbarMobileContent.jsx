@@ -30,8 +30,8 @@ export function NavbarMobileContent({ textClassName = 'text-gray-700' }) {
     : buildGuestItems(navigationItems)
 
   return (
-    <SheetContent side="right">
-      <SheetHeader>
+    <SheetContent side="right" className="gap-3">
+      <SheetHeader className="p-3">
         <SheetTitle>Menu</SheetTitle>
         <SheetDescription>
           <p className="text-sm text-muted-foreground">
@@ -41,7 +41,7 @@ export function NavbarMobileContent({ textClassName = 'text-gray-700' }) {
           </p>
         </SheetDescription>
       </SheetHeader>
-      <div className="grid gap-4 py-4">
+      <div className="grid gap-3 px-3 pb-5">
         {isAuthenticated && <NavbarMobileUserCard user={user} />}
 
         <NavbarNavigationLinks

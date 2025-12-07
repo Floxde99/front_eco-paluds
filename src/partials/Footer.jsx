@@ -14,9 +14,6 @@ export function Footer() {
             <p className="text-sm text-slate-100/80 leading-relaxed">
               La plateforme d&apos;économie circulaire des Paluds pour connecter dirigeants, synergies et opportunités locales.
             </p>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-amber-100/80">
-              Réseau business · Impact durable
-            </div>
           </div>
         </div>
 
@@ -34,10 +31,8 @@ export function Footer() {
             <Link className="block text-slate-100/80 hover:text-white transition-colors" to="/cgu">CGU</Link>
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-100">Contact</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-100">Support</p>
             <span className="block text-slate-100/80">support@ecopaluds.fr</span>
-            <span className="block text-slate-100/80">+33 (0)4 00 00 00 00</span>
-            <span className="block text-slate-100/80">Zone des Paluds · Aubagne</span>
           </div>
         </div>
       </div>

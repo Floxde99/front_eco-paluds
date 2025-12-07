@@ -38,9 +38,9 @@ export default function SuggestionCard({ suggestion, onIgnore, onSave, onContact
 
 function SuggestionCardHeader({ suggestion, compatibilityStyles }) {
   return (
-    <div className="flex items-start justify-between border-b border-slate-200 p-6">
+    <div className="flex flex-col gap-4 border-b border-slate-200 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-6">
       <div className="flex-1">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex flex-col gap-1 mb-2 sm:flex-row sm:items-center sm:gap-3">
           <h3 className="text-xl font-semibold text-slate-900">{suggestion.company}</h3>
           {suggestion.status === 'nouveau' && (
             <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold uppercase text-red-600">
@@ -51,7 +51,7 @@ function SuggestionCardHeader({ suggestion, compatibilityStyles }) {
         <p className="text-sm text-slate-600 mb-1">{suggestion.activity}</p>
         <p className="text-xs text-slate-500">{suggestion.distance} km</p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 sm:justify-end">
         <div className={`rounded-lg border px-3 py-1.5 ${compatibilityStyles}`}>
           <p className="text-sm font-bold">{suggestion.compatibility}% compatible</p>
         </div>
@@ -67,7 +67,7 @@ function SuggestionReasons({ reasons }) {
   if (!reasons?.length) return null
 
   return (
-    <div className="bg-slate-50 p-6 border-b border-slate-200">
+    <div className="bg-slate-50 p-4 sm:p-6 border-b border-slate-200">
       <h4 className="text-sm font-semibold text-slate-900 mb-3">Pourquoi cette suggestion ?</h4>
       <ul className="space-y-2">
         {reasons.map((reason, idx) => (
@@ -85,7 +85,7 @@ function SuggestionDescription({ description, tags }) {
   if (!description) return null
 
   return (
-    <div className="bg-slate-50 p-6 border-b border-slate-200">
+    <div className="bg-slate-50 p-4 sm:p-6 border-b border-slate-200">
       <h4 className="text-sm font-semibold text-slate-900 mb-2">Opportunité de partenariat</h4>
       <p className="text-sm text-slate-700">{description}</p>
       {tags?.length > 0 && (
@@ -108,7 +108,7 @@ function SuggestionOfferDemand({ offer, demand }) {
   if (!offer && !demand) return null
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+    <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 md:grid-cols-2">
       {offer && (
         <OfferDemandColumn
           icon={<Package className="h-4 w-4 text-emerald-700" />}
@@ -149,18 +149,18 @@ function OfferDemandColumn({ icon, label, items, iconContainerClass }) {
 
 function SuggestionActions({ suggestionId, onIgnore, onSave, onContact }) {
   return (
-    <div className="flex items-center justify-between bg-white p-6">
-      <div className="flex gap-2">
+    <div className="flex flex-col gap-3 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Button
           variant="outline"
-          className="gap-2"
+          className="gap-2 w-full sm:w-auto"
           onClick={() => onIgnore?.(suggestionId)}
         >
           Ignorer
         </Button>
         <Button
           variant="outline"
-          className="gap-2"
+          className="gap-2 w-full sm:w-auto"
           onClick={() => onSave?.(suggestionId)}
         >
           <Clock className="h-4 w-4" />
@@ -168,7 +168,7 @@ function SuggestionActions({ suggestionId, onIgnore, onSave, onContact }) {
         </Button>
       </div>
       <Button
-        className="gap-2 bg-blue-600 hover:bg-blue-700"
+        className="gap-2 bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
         onClick={() => onContact?.(suggestionId)}
       >
         Prendre contact

@@ -10,7 +10,7 @@ export function NavbarMobileMenu({ textClassName = 'text-gray-900' }) {
     <div className="md:hidden">
       <Sheet open={isMobileOpen} onOpenChange={toggleMobile}>
         <NavbarMobileTrigger textClassName={textClassName} />
-        <NavbarMobileContent textClassName={textClassName} />
+        <NavbarMobileContent textClassName="text-gray-900" />
       </Sheet>
     </div>
   )

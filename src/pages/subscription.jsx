@@ -300,7 +300,7 @@ function PricingSection() {
   const { plans } = useSubscriptionPage()
   return (
     <section className="space-y-8">
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {plans.map((plan) => (
           <PlanCard key={plan.id} plan={plan} />
         ))}

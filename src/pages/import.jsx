@@ -313,9 +313,9 @@ export default function ImportPage() {
 // ===================
 function PageHeader({ stats }) {
   return (
-    <div className="flex items-start justify-between">
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Upload className="h-8 w-8 text-blue-600" />
           <h1 className="text-3xl font-bold text-slate-900">Import automatisé des données</h1>
           <Badge className="bg-[#FFC107] text-white hover:bg-[#FFA000]">
@@ -328,12 +328,12 @@ function PageHeader({ stats }) {
       </div>
       
       {stats && (
-        <div className="flex gap-6">
-          <div className="text-center">
+        <div className="grid grid-cols-2 gap-4 sm:flex sm:gap-6">
+          <div className="text-center px-4 py-3 rounded-lg bg-white shadow-sm">
             <p className="text-2xl font-bold text-blue-600">{stats.totalImports || 127}</p>
             <p className="text-sm text-slate-600">Imports ce mois</p>
           </div>
-          <div className="text-center">
+          <div className="text-center px-4 py-3 rounded-lg bg-white shadow-sm">
             <p className="text-2xl font-bold text-emerald-600">{stats.precisionRate || 94}%</p>
             <p className="text-sm text-slate-600">Précision IA</p>
           </div>
@@ -364,9 +364,9 @@ function ImportSteps({ currentStep }) {
     <Card>
       <CardContent className="p-6">
         <h3 className="mb-4 text-lg font-semibold text-slate-900">Processus d'import en 4 étapes</h3>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {steps.map((step, index) => (
-            <div key={step.id} className="flex flex-1 items-center">
+            <div key={step.id} className="flex flex-1 items-center gap-3">
               <div className="flex flex-col items-center">
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full border-2 font-semibold ${
@@ -391,7 +391,7 @@ function ImportSteps({ currentStep }) {
                 </p>
               </div>
               {index < steps.length - 1 && (
-                <div className={`h-0.5 flex-1 ${step.isCompleted ? 'bg-emerald-600' : 'bg-slate-200'}`} />
+                <div className={`hidden h-0.5 flex-1 sm:block ${step.isCompleted ? 'bg-emerald-600' : 'bg-slate-200'}`} />
               )}
             </div>
           ))}

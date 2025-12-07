@@ -10,10 +10,10 @@ import { SUGGESTION_FILTERS } from './constants'
 
 export default function SuggestionsFilterBar({ currentFilter, onFilterChange }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2 w-full sm:w-auto">
             <Filter className="h-4 w-4" />
             Trier par
           </Button>
@@ -31,7 +31,7 @@ export default function SuggestionsFilterBar({ currentFilter, onFilterChange }) 
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Button variant="default" className="gap-2">
+      <Button variant="default" className="gap-2 w-full sm:w-auto">
         <Search className="h-4 w-4" />
         Filtres
       </Button>
